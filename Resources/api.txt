@@ -1,0 +1,7 @@
+Link	Remark
+https://api.spgps.lk/api/public/devices-for-live-map	All the devices active to show case on the map
+https://api.spgps.lk/api/public/withMeta/[RouteID]	All the meta data regariding a route
+https://api.spgps.lk/api/public/timetable/bus-turn-running-slots/[routeID]	Time table regarding a route
+https://api.spgps.lk/api/public/routes?searchKey=galle	Rute serach
+https://api.spgps.lk/api/public/routes?perPage=1000 allow to fetch routes
+https://api.spgps.lk/api/public/device-id-by-slot-id 

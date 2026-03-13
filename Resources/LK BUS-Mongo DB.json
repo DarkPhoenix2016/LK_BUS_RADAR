@@ -1,0 +1,656 @@
+{
+  "collections": {
+    "LKBusRadar.buses": {
+      "ns": "LKBusRadar.buses",
+      "jsonSchema": {
+        "bsonType": "object",
+        "required": [
+          "_id",
+          "busNumber",
+          "conductorContact",
+          "createdAt",
+          "driverContact",
+          "routePermitId",
+          "updatedAt"
+        ],
+        "properties": {
+          "_id": {
+            "bsonType": "string"
+          },
+          "busNumber": {
+            "bsonType": "string"
+          },
+          "conductorContact": {
+            "bsonType": [
+              "string",
+              "null"
+            ]
+          },
+          "createdAt": {
+            "bsonType": "date"
+          },
+          "driverContact": {
+            "bsonType": [
+              "null",
+              "string"
+            ]
+          },
+          "routePermitId": {
+            "bsonType": "string"
+          },
+          "seatingCapacity": {
+            "bsonType": "int"
+          },
+          "totalDistance": {
+            "bsonType": "int"
+          },
+          "updatedAt": {
+            "bsonType": "date"
+          }
+        }
+      }
+    },
+    "LKBusRadar.busstops": {
+      "ns": "LKBusRadar.busstops",
+      "jsonSchema": {
+        "bsonType": "object",
+        "required": [
+          "_id",
+          "createdAt",
+          "geoFenceRadius",
+          "latitude",
+          "longitude",
+          "name",
+          "type",
+          "updatedAt"
+        ],
+        "properties": {
+          "_id": {
+            "bsonType": "string"
+          },
+          "createdAt": {
+            "bsonType": "date"
+          },
+          "geoFenceRadius": {
+            "bsonType": "int"
+          },
+          "latitude": {
+            "bsonType": "double"
+          },
+          "longitude": {
+            "bsonType": "double"
+          },
+          "name": {
+            "bsonType": "string"
+          },
+          "type": {
+            "bsonType": "string"
+          },
+          "updatedAt": {
+            "bsonType": "date"
+          }
+        }
+      }
+    },
+    "LKBusRadar.busturns": {
+      "ns": "LKBusRadar.busturns",
+      "jsonSchema": {
+        "bsonType": "object",
+        "required": [
+          "_id",
+          "busTurnStatus",
+          "createdAt",
+          "deviceId",
+          "loadingStartingTime",
+          "runningSlotId",
+          "updatedAt"
+        ],
+        "properties": {
+          "_id": {
+            "bsonType": "string"
+          },
+          "busTurnStatus": {
+            "bsonType": "string"
+          },
+          "createdAt": {
+            "bsonType": "date"
+          },
+          "deviceId": {
+            "bsonType": "string"
+          },
+          "loadingStartingTime": {
+            "bsonType": "string"
+          },
+          "runningSlotId": {
+            "bsonType": "string"
+          },
+          "updatedAt": {
+            "bsonType": "date"
+          }
+        }
+      }
+    },
+    "LKBusRadar.devices": {
+      "ns": "LKBusRadar.devices",
+      "jsonSchema": {
+        "bsonType": "object",
+        "required": [
+          "_id",
+          "busId",
+          "createdAt",
+          "imei",
+          "isActive",
+          "simNumber",
+          "updatedAt"
+        ],
+        "properties": {
+          "_id": {
+            "bsonType": "string"
+          },
+          "busId": {
+            "bsonType": "string"
+          },
+          "createdAt": {
+            "bsonType": "date"
+          },
+          "imei": {
+            "bsonType": "string"
+          },
+          "isActive": {
+            "bsonType": "bool"
+          },
+          "simNumber": {
+            "bsonType": "string"
+          },
+          "updatedAt": {
+            "bsonType": "date"
+          }
+        }
+      }
+    },
+    "LKBusRadar.liveroutevehicles": {
+      "ns": "LKBusRadar.liveroutevehicles",
+      "jsonSchema": {
+        "bsonType": "object",
+        "required": [
+          "_id",
+          "busNumber",
+          "createdAt",
+          "deviceId",
+          "routeId",
+          "timestamp",
+          "updatedAt"
+        ],
+        "properties": {
+          "_id": {
+            "bsonType": "objectId"
+          },
+          "busNumber": {
+            "bsonType": "string"
+          },
+          "createdAt": {
+            "bsonType": "date"
+          },
+          "deviceId": {
+            "bsonType": "string"
+          },
+          "lat": {
+            "bsonType": "double"
+          },
+          "lon": {
+            "bsonType": "double"
+          },
+          "routeId": {
+            "bsonType": "string"
+          },
+          "timestamp": {
+            "bsonType": "date"
+          },
+          "updatedAt": {
+            "bsonType": "date"
+          }
+        }
+      }
+    },
+    "LKBusRadar.livevehicles": {
+      "ns": "LKBusRadar.livevehicles",
+      "jsonSchema": {
+        "bsonType": "object",
+        "required": [
+          "_id",
+          "busId",
+          "createdAt",
+          "isOnline",
+          "timestamp",
+          "updatedAt"
+        ],
+        "properties": {
+          "_id": {
+            "bsonType": "string"
+          },
+          "busId": {
+            "bsonType": "string"
+          },
+          "createdAt": {
+            "bsonType": "date"
+          },
+          "isOnline": {
+            "bsonType": "bool"
+          },
+          "lat": {
+            "bsonType": "double"
+          },
+          "lon": {
+            "bsonType": "double"
+          },
+          "timestamp": {
+            "bsonType": "date"
+          },
+          "updatedAt": {
+            "bsonType": "date"
+          }
+        }
+      }
+    },
+    "LKBusRadar.routepermits": {
+      "ns": "LKBusRadar.routepermits",
+      "jsonSchema": {
+        "bsonType": "object",
+        "required": [
+          "_id",
+          "createdAt",
+          "ownerId",
+          "permitNumber",
+          "routeId",
+          "routePermitType",
+          "updatedAt"
+        ],
+        "properties": {
+          "_id": {
+            "bsonType": "string"
+          },
+          "createdAt": {
+            "bsonType": "date"
+          },
+          "ownerId": {
+            "bsonType": "string"
+          },
+          "permitNumber": {
+            "bsonType": "string"
+          },
+          "routeId": {
+            "bsonType": "string"
+          },
+          "routePermitType": {
+            "bsonType": "string"
+          },
+          "updatedAt": {
+            "bsonType": "date"
+          }
+        }
+      }
+    },
+    "LKBusRadar.routes": {
+      "ns": "LKBusRadar.routes",
+      "jsonSchema": {
+        "bsonType": "object",
+        "required": [
+          "_id",
+          "createdAt",
+          "endingBusStop",
+          "routeNumber",
+          "startingBusStop",
+          "updatedAt"
+        ],
+        "properties": {
+          "_id": {
+            "bsonType": "string"
+          },
+          "createdAt": {
+            "bsonType": "date"
+          },
+          "endingBusStop": {
+            "bsonType": "string"
+          },
+          "routeDistance": {
+            "bsonType": [
+              "double",
+              "int"
+            ]
+          },
+          "routeNumber": {
+            "bsonType": "string"
+          },
+          "startingBusStop": {
+            "bsonType": "string"
+          },
+          "updatedAt": {
+            "bsonType": "date"
+          }
+        }
+      }
+    },
+    "LKBusRadar.routestops": {
+      "ns": "LKBusRadar.routestops",
+      "jsonSchema": {
+        "bsonType": "object",
+        "required": [
+          "_id",
+          "createdAt",
+          "direction",
+          "displayOrder",
+          "routeId",
+          "stopId",
+          "updatedAt"
+        ],
+        "properties": {
+          "_id": {
+            "bsonType": "objectId"
+          },
+          "createdAt": {
+            "bsonType": "date"
+          },
+          "direction": {
+            "bsonType": "string"
+          },
+          "displayOrder": {
+            "bsonType": "int"
+          },
+          "routeId": {
+            "bsonType": "string"
+          },
+          "stopId": {
+            "bsonType": "string"
+          },
+          "updatedAt": {
+            "bsonType": "date"
+          }
+        }
+      }
+    },
+    "LKBusRadar.runningnumbers": {
+      "ns": "LKBusRadar.runningnumbers",
+      "jsonSchema": {
+        "bsonType": "object",
+        "required": [
+          "_id",
+          "busType",
+          "createdAt",
+          "runningNumber",
+          "updatedAt"
+        ],
+        "properties": {
+          "_id": {
+            "bsonType": "string"
+          },
+          "busType": {
+            "bsonType": "string"
+          },
+          "createdAt": {
+            "bsonType": "date"
+          },
+          "runningNumber": {
+            "bsonType": "string"
+          },
+          "updatedAt": {
+            "bsonType": "date"
+          }
+        }
+      }
+    },
+    "LKBusRadar.runningslots": {
+      "ns": "LKBusRadar.runningslots",
+      "jsonSchema": {
+        "bsonType": "object",
+        "required": [
+          "_id",
+          "createdAt",
+          "direction",
+          "routeId",
+          "runningNumberId",
+          "updatedAt"
+        ],
+        "properties": {
+          "_id": {
+            "bsonType": "string"
+          },
+          "createdAt": {
+            "bsonType": "date"
+          },
+          "direction": {
+            "bsonType": "string"
+          },
+          "routeId": {
+            "bsonType": "string"
+          },
+          "runningNumberId": {
+            "bsonType": "string"
+          },
+          "updatedAt": {
+            "bsonType": "date"
+          }
+        }
+      }
+    },
+    "LKBusRadar.runningslotstops": {
+      "ns": "LKBusRadar.runningslotstops",
+      "jsonSchema": {
+        "bsonType": "object",
+        "required": [
+          "_id",
+          "createdAt",
+          "slotId",
+          "stopId",
+          "updatedAt",
+          "weekdayTime",
+          "weekendTime"
+        ],
+        "properties": {
+          "_id": {
+            "bsonType": "objectId"
+          },
+          "createdAt": {
+            "bsonType": "date"
+          },
+          "slotId": {
+            "bsonType": "string"
+          },
+          "stopId": {
+            "bsonType": "string"
+          },
+          "updatedAt": {
+            "bsonType": "date"
+          },
+          "weekdayTime": {
+            "bsonType": "string"
+          },
+          "weekendTime": {
+            "bsonType": "string"
+          }
+        }
+      }
+    }
+  },
+  "relationships": [
+    {
+      "id": "66bfec77-1370-4e13-bd3a-6a723efbbf50",
+      "relationship": [
+        {
+          "ns": "LKBusRadar.devices",
+          "fields": [
+            "busId"
+          ],
+          "cardinality": 1
+        },
+        {
+          "ns": "LKBusRadar.buses",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        }
+      ],
+      "isInferred": true
+    },
+    {
+      "id": "39f009a5-947c-4072-b637-5e37a417b32b",
+      "relationship": [
+        {
+          "ns": "LKBusRadar.livevehicles",
+          "fields": [
+            "busId"
+          ],
+          "cardinality": 1
+        },
+        {
+          "ns": "LKBusRadar.buses",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        }
+      ],
+      "isInferred": true
+    },
+    {
+      "id": "57b7113c-5dd8-41e9-9c61-f871501024b4",
+      "relationship": [
+        {
+          "ns": "LKBusRadar.liveroutevehicles",
+          "fields": [
+            "deviceId"
+          ],
+          "cardinality": 1
+        },
+        {
+          "ns": "LKBusRadar.devices",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        }
+      ],
+      "isInferred": true
+    },
+    {
+      "id": "17b0a614-84d9-4a72-90bf-c6ecfca48245",
+      "relationship": [
+        {
+          "ns": "LKBusRadar.livevehicles",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        },
+        {
+          "ns": "LKBusRadar.devices",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        }
+      ],
+      "isInferred": true
+    },
+    {
+      "id": "02fb62a7-a98a-4f9b-8e5b-80c3fd28b51d",
+      "relationship": [
+        {
+          "ns": "LKBusRadar.devices",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        },
+        {
+          "ns": "LKBusRadar.livevehicles",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        }
+      ],
+      "isInferred": true
+    },
+    {
+      "id": "94cfe9ca-c58b-4682-a64e-798c775b2b1f",
+      "relationship": [
+        {
+          "ns": "LKBusRadar.liveroutevehicles",
+          "fields": [
+            "deviceId"
+          ],
+          "cardinality": 1
+        },
+        {
+          "ns": "LKBusRadar.livevehicles",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        }
+      ],
+      "isInferred": true
+    },
+    {
+      "id": "5840a1bf-4971-4d8c-a4a1-643710768f45",
+      "relationship": [
+        {
+          "ns": "LKBusRadar.buses",
+          "fields": [
+            "routePermitId"
+          ],
+          "cardinality": 1
+        },
+        {
+          "ns": "LKBusRadar.routepermits",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        }
+      ],
+      "isInferred": true
+    },
+    {
+      "id": "6e1a7c23-a6da-4af0-a941-70f716e2b830",
+      "relationship": [
+        {
+          "ns": "LKBusRadar.busturns",
+          "fields": [
+            "runningSlotId"
+          ],
+          "cardinality": 1
+        },
+        {
+          "ns": "LKBusRadar.runningslots",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        }
+      ],
+      "isInferred": true
+    },
+    {
+      "id": "333fdbb6-5cd6-4460-b6c8-513aea25d52a",
+      "relationship": [
+        {
+          "ns": "LKBusRadar.runningnumbers",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        },
+        {
+          "ns": "LKBusRadar.runningslots",
+          "fields": [
+            "_id"
+          ],
+          "cardinality": 1
+        }
+      ],
+      "isInferred": true
+    }
+  ]
+}

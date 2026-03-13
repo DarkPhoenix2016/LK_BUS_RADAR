@@ -1,0 +1,6 @@
+{
+  "devicesForLiveMap": "https://api.spgps.lk/api/public/devices-for-live-map",
+  "allRoutes": "https://api.spgps.lk/api/public/routes?perPage=1000",
+  "routeMeta": "https://api.spgps.lk/api/public/withMeta/{routeID}",
+  "routeTimetable": "https://api.spgps.lk/api/public/timetable/bus-turn-running-slots/{routeID}"
+}

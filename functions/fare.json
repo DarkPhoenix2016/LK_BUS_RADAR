@@ -1,0 +1,1752 @@
+[
+  {
+    "sectionNumber": 1,
+    "numberofStops": 1,
+    "fare": 27
+  },
+  {
+    "sectionNumber": 2,
+    "numberofStops": 2,
+    "fare": 35
+  },
+  {
+    "sectionNumber": 3,
+    "numberofStops": 3,
+    "fare": 45
+  },
+  {
+    "sectionNumber": 4,
+    "numberofStops": 4,
+    "fare": 55
+  },
+  {
+    "sectionNumber": 5,
+    "numberofStops": 5,
+    "fare": 66
+  },
+  {
+    "sectionNumber": 6,
+    "numberofStops": 6,
+    "fare": 76
+  },
+  {
+    "sectionNumber": 7,
+    "numberofStops": 7,
+    "fare": 86
+  },
+  {
+    "sectionNumber": 8,
+    "numberofStops": 8,
+    "fare": 90
+  },
+  {
+    "sectionNumber": 9,
+    "numberofStops": 9,
+    "fare": 97
+  },
+  {
+    "sectionNumber": 10,
+    "numberofStops": 10,
+    "fare": 104
+  },
+  {
+    "sectionNumber": 11,
+    "numberofStops": 11,
+    "fare": 111
+  },
+  {
+    "sectionNumber": 12,
+    "numberofStops": 12,
+    "fare": 116
+  },
+  {
+    "sectionNumber": 13,
+    "numberofStops": 13,
+    "fare": 123
+  },
+  {
+    "sectionNumber": 14,
+    "numberofStops": 14,
+    "fare": 130
+  },
+  {
+    "sectionNumber": 15,
+    "numberofStops": 15,
+    "fare": 135
+  },
+  {
+    "sectionNumber": 16,
+    "numberofStops": 16,
+    "fare": 140
+  },
+  {
+    "sectionNumber": 17,
+    "numberofStops": 17,
+    "fare": 147
+  },
+  {
+    "sectionNumber": 18,
+    "numberofStops": 18,
+    "fare": 152
+  },
+  {
+    "sectionNumber": 19,
+    "numberofStops": 19,
+    "fare": 159
+  },
+  {
+    "sectionNumber": 20,
+    "numberofStops": 20,
+    "fare": 164
+  },
+  {
+    "sectionNumber": 21,
+    "numberofStops": 21,
+    "fare": 171
+  },
+  {
+    "sectionNumber": 22,
+    "numberofStops": 22,
+    "fare": 176
+  },
+  {
+    "sectionNumber": 23,
+    "numberofStops": 23,
+    "fare": 183
+  },
+  {
+    "sectionNumber": 24,
+    "numberofStops": 24,
+    "fare": 189
+  },
+  {
+    "sectionNumber": 25,
+    "numberofStops": 25,
+    "fare": 195
+  },
+  {
+    "sectionNumber": 26,
+    "numberofStops": 26,
+    "fare": 201
+  },
+  {
+    "sectionNumber": 27,
+    "numberofStops": 27,
+    "fare": 208
+  },
+  {
+    "sectionNumber": 28,
+    "numberofStops": 28,
+    "fare": 213
+  },
+  {
+    "sectionNumber": 29,
+    "numberofStops": 29,
+    "fare": 220
+  },
+  {
+    "sectionNumber": 30,
+    "numberofStops": 30,
+    "fare": 227
+  },
+  {
+    "sectionNumber": 31,
+    "numberofStops": 31,
+    "fare": 232
+  },
+  {
+    "sectionNumber": 32,
+    "numberofStops": 32,
+    "fare": 239
+  },
+  {
+    "sectionNumber": 33,
+    "numberofStops": 33,
+    "fare": 244
+  },
+  {
+    "sectionNumber": 34,
+    "numberofStops": 34,
+    "fare": 251
+  },
+  {
+    "sectionNumber": 35,
+    "numberofStops": 35,
+    "fare": 256
+  },
+  {
+    "sectionNumber": 36,
+    "numberofStops": 36,
+    "fare": 263
+  },
+  {
+    "sectionNumber": 37,
+    "numberofStops": 37,
+    "fare": 268
+  },
+  {
+    "sectionNumber": 38,
+    "numberofStops": 38,
+    "fare": 275
+  },
+  {
+    "sectionNumber": 39,
+    "numberofStops": 39,
+    "fare": 280
+  },
+  {
+    "sectionNumber": 40,
+    "numberofStops": 40,
+    "fare": 287
+  },
+  {
+    "sectionNumber": 41,
+    "numberofStops": 41,
+    "fare": 292
+  },
+  {
+    "sectionNumber": 42,
+    "numberofStops": 42,
+    "fare": 299
+  },
+  {
+    "sectionNumber": 43,
+    "numberofStops": 43,
+    "fare": 304
+  },
+  {
+    "sectionNumber": 44,
+    "numberofStops": 44,
+    "fare": 311
+  },
+  {
+    "sectionNumber": 45,
+    "numberofStops": 45,
+    "fare": 317
+  },
+  {
+    "sectionNumber": 46,
+    "numberofStops": 46,
+    "fare": 323
+  },
+  {
+    "sectionNumber": 47,
+    "numberofStops": 47,
+    "fare": 329
+  },
+  {
+    "sectionNumber": 48,
+    "numberofStops": 48,
+    "fare": 336
+  },
+  {
+    "sectionNumber": 49,
+    "numberofStops": 49,
+    "fare": 341
+  },
+  {
+    "sectionNumber": 50,
+    "numberofStops": 50,
+    "fare": 348
+  },
+  {
+    "sectionNumber": 51,
+    "numberofStops": 51,
+    "fare": 353
+  },
+  {
+    "sectionNumber": 52,
+    "numberofStops": 52,
+    "fare": 360
+  },
+  {
+    "sectionNumber": 53,
+    "numberofStops": 53,
+    "fare": 365
+  },
+  {
+    "sectionNumber": 54,
+    "numberofStops": 54,
+    "fare": 372
+  },
+  {
+    "sectionNumber": 55,
+    "numberofStops": 55,
+    "fare": 379
+  },
+  {
+    "sectionNumber": 56,
+    "numberofStops": 56,
+    "fare": 384
+  },
+  {
+    "sectionNumber": 57,
+    "numberofStops": 57,
+    "fare": 391
+  },
+  {
+    "sectionNumber": 58,
+    "numberofStops": 58,
+    "fare": 396
+  },
+  {
+    "sectionNumber": 59,
+    "numberofStops": 59,
+    "fare": 403
+  },
+  {
+    "sectionNumber": 60,
+    "numberofStops": 60,
+    "fare": 408
+  },
+  {
+    "sectionNumber": 61,
+    "numberofStops": 61,
+    "fare": 413
+  },
+  {
+    "sectionNumber": 62,
+    "numberofStops": 62,
+    "fare": 419
+  },
+  {
+    "sectionNumber": 63,
+    "numberofStops": 63,
+    "fare": 425
+  },
+  {
+    "sectionNumber": 64,
+    "numberofStops": 64,
+    "fare": 431
+  },
+  {
+    "sectionNumber": 65,
+    "numberofStops": 65,
+    "fare": 438
+  },
+  {
+    "sectionNumber": 66,
+    "numberofStops": 66,
+    "fare": 443
+  },
+  {
+    "sectionNumber": 67,
+    "numberofStops": 67,
+    "fare": 450
+  },
+  {
+    "sectionNumber": 68,
+    "numberofStops": 68,
+    "fare": 455
+  },
+  {
+    "sectionNumber": 69,
+    "numberofStops": 69,
+    "fare": 462
+  },
+  {
+    "sectionNumber": 70,
+    "numberofStops": 70,
+    "fare": 467
+  },
+  {
+    "sectionNumber": 71,
+    "numberofStops": 71,
+    "fare": 474
+  },
+  {
+    "sectionNumber": 72,
+    "numberofStops": 72,
+    "fare": 479
+  },
+  {
+    "sectionNumber": 73,
+    "numberofStops": 73,
+    "fare": 486
+  },
+  {
+    "sectionNumber": 74,
+    "numberofStops": 74,
+    "fare": 491
+  },
+  {
+    "sectionNumber": 75,
+    "numberofStops": 75,
+    "fare": 496
+  },
+  {
+    "sectionNumber": 76,
+    "numberofStops": 76,
+    "fare": 503
+  },
+  {
+    "sectionNumber": 77,
+    "numberofStops": 77,
+    "fare": 509
+  },
+  {
+    "sectionNumber": 78,
+    "numberofStops": 78,
+    "fare": 515
+  },
+  {
+    "sectionNumber": 79,
+    "numberofStops": 79,
+    "fare": 521
+  },
+  {
+    "sectionNumber": 80,
+    "numberofStops": 80,
+    "fare": 528
+  },
+  {
+    "sectionNumber": 81,
+    "numberofStops": 81,
+    "fare": 533
+  },
+  {
+    "sectionNumber": 82,
+    "numberofStops": 82,
+    "fare": 540
+  },
+  {
+    "sectionNumber": 83,
+    "numberofStops": 83,
+    "fare": 545
+  },
+  {
+    "sectionNumber": 84,
+    "numberofStops": 84,
+    "fare": 552
+  },
+  {
+    "sectionNumber": 85,
+    "numberofStops": 85,
+    "fare": 557
+  },
+  {
+    "sectionNumber": 86,
+    "numberofStops": 86,
+    "fare": 564
+  },
+  {
+    "sectionNumber": 87,
+    "numberofStops": 87,
+    "fare": 569
+  },
+  {
+    "sectionNumber": 88,
+    "numberofStops": 88,
+    "fare": 576
+  },
+  {
+    "sectionNumber": 89,
+    "numberofStops": 89,
+    "fare": 581
+  },
+  {
+    "sectionNumber": 90,
+    "numberofStops": 90,
+    "fare": 588
+  },
+  {
+    "sectionNumber": 91,
+    "numberofStops": 91,
+    "fare": 593
+  },
+  {
+    "sectionNumber": 92,
+    "numberofStops": 92,
+    "fare": 600
+  },
+  {
+    "sectionNumber": 93,
+    "numberofStops": 93,
+    "fare": 605
+  },
+  {
+    "sectionNumber": 94,
+    "numberofStops": 94,
+    "fare": 612
+  },
+  {
+    "sectionNumber": 95,
+    "numberofStops": 95,
+    "fare": 617
+  },
+  {
+    "sectionNumber": 96,
+    "numberofStops": 96,
+    "fare": 624
+  },
+  {
+    "sectionNumber": 97,
+    "numberofStops": 97,
+    "fare": 630
+  },
+  {
+    "sectionNumber": 98,
+    "numberofStops": 98,
+    "fare": 635
+  },
+  {
+    "sectionNumber": 99,
+    "numberofStops": 99,
+    "fare": 642
+  },
+  {
+    "sectionNumber": 100,
+    "numberofStops": 100,
+    "fare": 647
+  },
+  {
+    "sectionNumber": 101,
+    "numberofStops": 101,
+    "fare": 654
+  },
+  {
+    "sectionNumber": 102,
+    "numberofStops": 102,
+    "fare": 659
+  },
+  {
+    "sectionNumber": 103,
+    "numberofStops": 103,
+    "fare": 666
+  },
+  {
+    "sectionNumber": 104,
+    "numberofStops": 104,
+    "fare": 671
+  },
+  {
+    "sectionNumber": 105,
+    "numberofStops": 105,
+    "fare": 678
+  },
+  {
+    "sectionNumber": 106,
+    "numberofStops": 106,
+    "fare": 683
+  },
+  {
+    "sectionNumber": 107,
+    "numberofStops": 107,
+    "fare": 690
+  },
+  {
+    "sectionNumber": 108,
+    "numberofStops": 108,
+    "fare": 695
+  },
+  {
+    "sectionNumber": 109,
+    "numberofStops": 109,
+    "fare": 702
+  },
+  {
+    "sectionNumber": 110,
+    "numberofStops": 110,
+    "fare": 707
+  },
+  {
+    "sectionNumber": 111,
+    "numberofStops": 111,
+    "fare": 714
+  },
+  {
+    "sectionNumber": 112,
+    "numberofStops": 112,
+    "fare": 720
+  },
+  {
+    "sectionNumber": 113,
+    "numberofStops": 113,
+    "fare": 726
+  },
+  {
+    "sectionNumber": 114,
+    "numberofStops": 114,
+    "fare": 732
+  },
+  {
+    "sectionNumber": 115,
+    "numberofStops": 115,
+    "fare": 739
+  },
+  {
+    "sectionNumber": 116,
+    "numberofStops": 116,
+    "fare": 744
+  },
+  {
+    "sectionNumber": 117,
+    "numberofStops": 117,
+    "fare": 751
+  },
+  {
+    "sectionNumber": 118,
+    "numberofStops": 118,
+    "fare": 756
+  },
+  {
+    "sectionNumber": 119,
+    "numberofStops": 119,
+    "fare": 761
+  },
+  {
+    "sectionNumber": 120,
+    "numberofStops": 120,
+    "fare": 768
+  },
+  {
+    "sectionNumber": 121,
+    "numberofStops": 121,
+    "fare": 773
+  },
+  {
+    "sectionNumber": 122,
+    "numberofStops": 122,
+    "fare": 780
+  },
+  {
+    "sectionNumber": 123,
+    "numberofStops": 123,
+    "fare": 785
+  },
+  {
+    "sectionNumber": 124,
+    "numberofStops": 124,
+    "fare": 792
+  },
+  {
+    "sectionNumber": 125,
+    "numberofStops": 125,
+    "fare": 797
+  },
+  {
+    "sectionNumber": 126,
+    "numberofStops": 126,
+    "fare": 804
+  },
+  {
+    "sectionNumber": 127,
+    "numberofStops": 127,
+    "fare": 809
+  },
+  {
+    "sectionNumber": 128,
+    "numberofStops": 128,
+    "fare": 816
+  },
+  {
+    "sectionNumber": 129,
+    "numberofStops": 129,
+    "fare": 822
+  },
+  {
+    "sectionNumber": 130,
+    "numberofStops": 130,
+    "fare": 828
+  },
+  {
+    "sectionNumber": 131,
+    "numberofStops": 131,
+    "fare": 834
+  },
+  {
+    "sectionNumber": 132,
+    "numberofStops": 132,
+    "fare": 841
+  },
+  {
+    "sectionNumber": 133,
+    "numberofStops": 133,
+    "fare": 846
+  },
+  {
+    "sectionNumber": 134,
+    "numberofStops": 134,
+    "fare": 853
+  },
+  {
+    "sectionNumber": 135,
+    "numberofStops": 135,
+    "fare": 858
+  },
+  {
+    "sectionNumber": 136,
+    "numberofStops": 136,
+    "fare": 865
+  },
+  {
+    "sectionNumber": 137,
+    "numberofStops": 137,
+    "fare": 870
+  },
+  {
+    "sectionNumber": 138,
+    "numberofStops": 138,
+    "fare": 877
+  },
+  {
+    "sectionNumber": 139,
+    "numberofStops": 139,
+    "fare": 882
+  },
+  {
+    "sectionNumber": 140,
+    "numberofStops": 140,
+    "fare": 887
+  },
+  {
+    "sectionNumber": 141,
+    "numberofStops": 141,
+    "fare": 894
+  },
+  {
+    "sectionNumber": 142,
+    "numberofStops": 142,
+    "fare": 899
+  },
+  {
+    "sectionNumber": 143,
+    "numberofStops": 143,
+    "fare": 906
+  },
+  {
+    "sectionNumber": 144,
+    "numberofStops": 144,
+    "fare": 912
+  },
+  {
+    "sectionNumber": 145,
+    "numberofStops": 145,
+    "fare": 918
+  },
+  {
+    "sectionNumber": 146,
+    "numberofStops": 146,
+    "fare": 924
+  },
+  {
+    "sectionNumber": 147,
+    "numberofStops": 147,
+    "fare": 931
+  },
+  {
+    "sectionNumber": 148,
+    "numberofStops": 148,
+    "fare": 936
+  },
+  {
+    "sectionNumber": 149,
+    "numberofStops": 149,
+    "fare": 943
+  },
+  {
+    "sectionNumber": 150,
+    "numberofStops": 150,
+    "fare": 948
+  },
+  {
+    "sectionNumber": 151,
+    "numberofStops": 151,
+    "fare": 955
+  },
+  {
+    "sectionNumber": 152,
+    "numberofStops": 152,
+    "fare": 960
+  },
+  {
+    "sectionNumber": 153,
+    "numberofStops": 153,
+    "fare": 967
+  },
+  {
+    "sectionNumber": 154,
+    "numberofStops": 154,
+    "fare": 972
+  },
+  {
+    "sectionNumber": 155,
+    "numberofStops": 155,
+    "fare": 979
+  },
+  {
+    "sectionNumber": 156,
+    "numberofStops": 156,
+    "fare": 984
+  },
+  {
+    "sectionNumber": 157,
+    "numberofStops": 157,
+    "fare": 991
+  },
+  {
+    "sectionNumber": 158,
+    "numberofStops": 158,
+    "fare": 996
+  },
+  {
+    "sectionNumber": 159,
+    "numberofStops": 159,
+    "fare": 1003
+  },
+  {
+    "sectionNumber": 160,
+    "numberofStops": 160,
+    "fare": 1008
+  },
+  {
+    "sectionNumber": 161,
+    "numberofStops": 161,
+    "fare": 1015
+  },
+  {
+    "sectionNumber": 162,
+    "numberofStops": 162,
+    "fare": 1020
+  },
+  {
+    "sectionNumber": 163,
+    "numberofStops": 163,
+    "fare": 1026
+  },
+  {
+    "sectionNumber": 164,
+    "numberofStops": 164,
+    "fare": 1033
+  },
+  {
+    "sectionNumber": 165,
+    "numberofStops": 165,
+    "fare": 1038
+  },
+  {
+    "sectionNumber": 166,
+    "numberofStops": 166,
+    "fare": 1045
+  },
+  {
+    "sectionNumber": 167,
+    "numberofStops": 167,
+    "fare": 1050
+  },
+  {
+    "sectionNumber": 168,
+    "numberofStops": 168,
+    "fare": 1057
+  },
+  {
+    "sectionNumber": 169,
+    "numberofStops": 169,
+    "fare": 1062
+  },
+  {
+    "sectionNumber": 170,
+    "numberofStops": 170,
+    "fare": 1069
+  },
+  {
+    "sectionNumber": 171,
+    "numberofStops": 171,
+    "fare": 1074
+  },
+  {
+    "sectionNumber": 172,
+    "numberofStops": 172,
+    "fare": 1081
+  },
+  {
+    "sectionNumber": 173,
+    "numberofStops": 173,
+    "fare": 1086
+  },
+  {
+    "sectionNumber": 174,
+    "numberofStops": 174,
+    "fare": 1093
+  },
+  {
+    "sectionNumber": 175,
+    "numberofStops": 175,
+    "fare": 1098
+  },
+  {
+    "sectionNumber": 176,
+    "numberofStops": 176,
+    "fare": 1105
+  },
+  {
+    "sectionNumber": 177,
+    "numberofStops": 177,
+    "fare": 1110
+  },
+  {
+    "sectionNumber": 178,
+    "numberofStops": 178,
+    "fare": 1117
+  },
+  {
+    "sectionNumber": 179,
+    "numberofStops": 179,
+    "fare": 1123
+  },
+  {
+    "sectionNumber": 180,
+    "numberofStops": 180,
+    "fare": 1129
+  },
+  {
+    "sectionNumber": 181,
+    "numberofStops": 181,
+    "fare": 1135
+  },
+  {
+    "sectionNumber": 182,
+    "numberofStops": 182,
+    "fare": 1142
+  },
+  {
+    "sectionNumber": 183,
+    "numberofStops": 183,
+    "fare": 1147
+  },
+  {
+    "sectionNumber": 184,
+    "numberofStops": 184,
+    "fare": 1152
+  },
+  {
+    "sectionNumber": 185,
+    "numberofStops": 185,
+    "fare": 1159
+  },
+  {
+    "sectionNumber": 186,
+    "numberofStops": 186,
+    "fare": 1164
+  },
+  {
+    "sectionNumber": 187,
+    "numberofStops": 187,
+    "fare": 1171
+  },
+  {
+    "sectionNumber": 188,
+    "numberofStops": 188,
+    "fare": 1176
+  },
+  {
+    "sectionNumber": 189,
+    "numberofStops": 189,
+    "fare": 1183
+  },
+  {
+    "sectionNumber": 190,
+    "numberofStops": 190,
+    "fare": 1188
+  },
+  {
+    "sectionNumber": 191,
+    "numberofStops": 191,
+    "fare": 1195
+  },
+  {
+    "sectionNumber": 192,
+    "numberofStops": 192,
+    "fare": 1200
+  },
+  {
+    "sectionNumber": 193,
+    "numberofStops": 193,
+    "fare": 1207
+  },
+  {
+    "sectionNumber": 194,
+    "numberofStops": 194,
+    "fare": 1212
+  },
+  {
+    "sectionNumber": 195,
+    "numberofStops": 195,
+    "fare": 1219
+  },
+  {
+    "sectionNumber": 196,
+    "numberofStops": 196,
+    "fare": 1225
+  },
+  {
+    "sectionNumber": 197,
+    "numberofStops": 197,
+    "fare": 1231
+  },
+  {
+    "sectionNumber": 198,
+    "numberofStops": 198,
+    "fare": 1237
+  },
+  {
+    "sectionNumber": 199,
+    "numberofStops": 199,
+    "fare": 1244
+  },
+  {
+    "sectionNumber": 200,
+    "numberofStops": 200,
+    "fare": 1249
+  },
+  {
+    "sectionNumber": 201,
+    "numberofStops": 201,
+    "fare": 1256
+  },
+  {
+    "sectionNumber": 202,
+    "numberofStops": 202,
+    "fare": 1261
+  },
+  {
+    "sectionNumber": 203,
+    "numberofStops": 203,
+    "fare": 1268
+  },
+  {
+    "sectionNumber": 204,
+    "numberofStops": 204,
+    "fare": 1273
+  },
+  {
+    "sectionNumber": 205,
+    "numberofStops": 205,
+    "fare": 1280
+  },
+  {
+    "sectionNumber": 206,
+    "numberofStops": 206,
+    "fare": 1285
+  },
+  {
+    "sectionNumber": 207,
+    "numberofStops": 207,
+    "fare": 1290
+  },
+  {
+    "sectionNumber": 208,
+    "numberofStops": 208,
+    "fare": 1297
+  },
+  {
+    "sectionNumber": 209,
+    "numberofStops": 209,
+    "fare": 1302
+  },
+  {
+    "sectionNumber": 210,
+    "numberofStops": 210,
+    "fare": 1309
+  },
+  {
+    "sectionNumber": 211,
+    "numberofStops": 211,
+    "fare": 1315
+  },
+  {
+    "sectionNumber": 212,
+    "numberofStops": 212,
+    "fare": 1321
+  },
+  {
+    "sectionNumber": 213,
+    "numberofStops": 213,
+    "fare": 1327
+  },
+  {
+    "sectionNumber": 214,
+    "numberofStops": 214,
+    "fare": 1334
+  },
+  {
+    "sectionNumber": 215,
+    "numberofStops": 215,
+    "fare": 1339
+  },
+  {
+    "sectionNumber": 216,
+    "numberofStops": 216,
+    "fare": 1346
+  },
+  {
+    "sectionNumber": 217,
+    "numberofStops": 217,
+    "fare": 1351
+  },
+  {
+    "sectionNumber": 218,
+    "numberofStops": 218,
+    "fare": 1358
+  },
+  {
+    "sectionNumber": 219,
+    "numberofStops": 219,
+    "fare": 1363
+  },
+  {
+    "sectionNumber": 220,
+    "numberofStops": 220,
+    "fare": 1370
+  },
+  {
+    "sectionNumber": 221,
+    "numberofStops": 221,
+    "fare": 1375
+  },
+  {
+    "sectionNumber": 222,
+    "numberofStops": 222,
+    "fare": 1382
+  },
+  {
+    "sectionNumber": 223,
+    "numberofStops": 223,
+    "fare": 1387
+  },
+  {
+    "sectionNumber": 224,
+    "numberofStops": 224,
+    "fare": 1394
+  },
+  {
+    "sectionNumber": 225,
+    "numberofStops": 225,
+    "fare": 1399
+  },
+  {
+    "sectionNumber": 226,
+    "numberofStops": 226,
+    "fare": 1406
+  },
+  {
+    "sectionNumber": 227,
+    "numberofStops": 227,
+    "fare": 1411
+  },
+  {
+    "sectionNumber": 228,
+    "numberofStops": 228,
+    "fare": 1417
+  },
+  {
+    "sectionNumber": 229,
+    "numberofStops": 229,
+    "fare": 1423
+  },
+  {
+    "sectionNumber": 230,
+    "numberofStops": 230,
+    "fare": 1429
+  },
+  {
+    "sectionNumber": 231,
+    "numberofStops": 231,
+    "fare": 1436
+  },
+  {
+    "sectionNumber": 232,
+    "numberofStops": 232,
+    "fare": 1441
+  },
+  {
+    "sectionNumber": 233,
+    "numberofStops": 233,
+    "fare": 1448
+  },
+  {
+    "sectionNumber": 234,
+    "numberofStops": 234,
+    "fare": 1453
+  },
+  {
+    "sectionNumber": 235,
+    "numberofStops": 235,
+    "fare": 1460
+  },
+  {
+    "sectionNumber": 236,
+    "numberofStops": 236,
+    "fare": 1465
+  },
+  {
+    "sectionNumber": 237,
+    "numberofStops": 237,
+    "fare": 1472
+  },
+  {
+    "sectionNumber": 238,
+    "numberofStops": 238,
+    "fare": 1477
+  },
+  {
+    "sectionNumber": 239,
+    "numberofStops": 239,
+    "fare": 1484
+  },
+  {
+    "sectionNumber": 240,
+    "numberofStops": 240,
+    "fare": 1489
+  },
+  {
+    "sectionNumber": 241,
+    "numberofStops": 241,
+    "fare": 1496
+  },
+  {
+    "sectionNumber": 242,
+    "numberofStops": 242,
+    "fare": 1501
+  },
+  {
+    "sectionNumber": 243,
+    "numberofStops": 243,
+    "fare": 1508
+  },
+  {
+    "sectionNumber": 244,
+    "numberofStops": 244,
+    "fare": 1513
+  },
+  {
+    "sectionNumber": 245,
+    "numberofStops": 245,
+    "fare": 1520
+  },
+  {
+    "sectionNumber": 246,
+    "numberofStops": 246,
+    "fare": 1526
+  },
+  {
+    "sectionNumber": 247,
+    "numberofStops": 247,
+    "fare": 1532
+  },
+  {
+    "sectionNumber": 248,
+    "numberofStops": 248,
+    "fare": 1538
+  },
+  {
+    "sectionNumber": 249,
+    "numberofStops": 249,
+    "fare": 1543
+  },
+  {
+    "sectionNumber": 250,
+    "numberofStops": 250,
+    "fare": 1550
+  },
+  {
+    "sectionNumber": 251,
+    "numberofStops": 251,
+    "fare": 1555
+  },
+  {
+    "sectionNumber": 252,
+    "numberofStops": 252,
+    "fare": 1562
+  },
+  {
+    "sectionNumber": 253,
+    "numberofStops": 253,
+    "fare": 1567
+  },
+  {
+    "sectionNumber": 254,
+    "numberofStops": 254,
+    "fare": 1574
+  },
+  {
+    "sectionNumber": 255,
+    "numberofStops": 255,
+    "fare": 1579
+  },
+  {
+    "sectionNumber": 256,
+    "numberofStops": 256,
+    "fare": 1586
+  },
+  {
+    "sectionNumber": 257,
+    "numberofStops": 257,
+    "fare": 1591
+  },
+  {
+    "sectionNumber": 258,
+    "numberofStops": 258,
+    "fare": 1598
+  },
+  {
+    "sectionNumber": 259,
+    "numberofStops": 259,
+    "fare": 1603
+  },
+  {
+    "sectionNumber": 260,
+    "numberofStops": 260,
+    "fare": 1610
+  },
+  {
+    "sectionNumber": 261,
+    "numberofStops": 261,
+    "fare": 1615
+  },
+  {
+    "sectionNumber": 262,
+    "numberofStops": 262,
+    "fare": 1622
+  },
+  {
+    "sectionNumber": 263,
+    "numberofStops": 263,
+    "fare": 1628
+  },
+  {
+    "sectionNumber": 264,
+    "numberofStops": 264,
+    "fare": 1634
+  },
+  {
+    "sectionNumber": 265,
+    "numberofStops": 265,
+    "fare": 1640
+  },
+  {
+    "sectionNumber": 266,
+    "numberofStops": 266,
+    "fare": 1647
+  },
+  {
+    "sectionNumber": 267,
+    "numberofStops": 267,
+    "fare": 1652
+  },
+  {
+    "sectionNumber": 268,
+    "numberofStops": 268,
+    "fare": 1659
+  },
+  {
+    "sectionNumber": 269,
+    "numberofStops": 269,
+    "fare": 1664
+  },
+  {
+    "sectionNumber": 270,
+    "numberofStops": 270,
+    "fare": 1671
+  },
+  {
+    "sectionNumber": 271,
+    "numberofStops": 271,
+    "fare": 1676
+  },
+  {
+    "sectionNumber": 272,
+    "numberofStops": 272,
+    "fare": 1681
+  },
+  {
+    "sectionNumber": 273,
+    "numberofStops": 273,
+    "fare": 1688
+  },
+  {
+    "sectionNumber": 274,
+    "numberofStops": 274,
+    "fare": 1693
+  },
+  {
+    "sectionNumber": 275,
+    "numberofStops": 275,
+    "fare": 1700
+  },
+  {
+    "sectionNumber": 276,
+    "numberofStops": 276,
+    "fare": 1705
+  },
+  {
+    "sectionNumber": 277,
+    "numberofStops": 277,
+    "fare": 1712
+  },
+  {
+    "sectionNumber": 278,
+    "numberofStops": 278,
+    "fare": 1718
+  },
+  {
+    "sectionNumber": 279,
+    "numberofStops": 279,
+    "fare": 1724
+  },
+  {
+    "sectionNumber": 280,
+    "numberofStops": 280,
+    "fare": 1730
+  },
+  {
+    "sectionNumber": 281,
+    "numberofStops": 281,
+    "fare": 1737
+  },
+  {
+    "sectionNumber": 282,
+    "numberofStops": 282,
+    "fare": 1742
+  },
+  {
+    "sectionNumber": 283,
+    "numberofStops": 283,
+    "fare": 1749
+  },
+  {
+    "sectionNumber": 284,
+    "numberofStops": 284,
+    "fare": 1754
+  },
+  {
+    "sectionNumber": 285,
+    "numberofStops": 285,
+    "fare": 1761
+  },
+  {
+    "sectionNumber": 286,
+    "numberofStops": 286,
+    "fare": 1766
+  },
+  {
+    "sectionNumber": 287,
+    "numberofStops": 287,
+    "fare": 1773
+  },
+  {
+    "sectionNumber": 288,
+    "numberofStops": 288,
+    "fare": 1778
+  },
+  {
+    "sectionNumber": 289,
+    "numberofStops": 289,
+    "fare": 1785
+  },
+  {
+    "sectionNumber": 290,
+    "numberofStops": 290,
+    "fare": 1790
+  },
+  {
+    "sectionNumber": 291,
+    "numberofStops": 291,
+    "fare": 1797
+  },
+  {
+    "sectionNumber": 292,
+    "numberofStops": 292,
+    "fare": 1802
+  },
+  {
+    "sectionNumber": 293,
+    "numberofStops": 293,
+    "fare": 1807
+  },
+  {
+    "sectionNumber": 294,
+    "numberofStops": 294,
+    "fare": 1814
+  },
+  {
+    "sectionNumber": 295,
+    "numberofStops": 295,
+    "fare": 1820
+  },
+  {
+    "sectionNumber": 296,
+    "numberofStops": 296,
+    "fare": 1826
+  },
+  {
+    "sectionNumber": 297,
+    "numberofStops": 297,
+    "fare": 1832
+  },
+  {
+    "sectionNumber": 298,
+    "numberofStops": 298,
+    "fare": 1839
+  },
+  {
+    "sectionNumber": 299,
+    "numberofStops": 299,
+    "fare": 1844
+  },
+  {
+    "sectionNumber": 300,
+    "numberofStops": 300,
+    "fare": 1851
+  },
+  {
+    "sectionNumber": 301,
+    "numberofStops": 301,
+    "fare": 1856
+  },
+  {
+    "sectionNumber": 302,
+    "numberofStops": 302,
+    "fare": 1863
+  },
+  {
+    "sectionNumber": 303,
+    "numberofStops": 303,
+    "fare": 1868
+  },
+  {
+    "sectionNumber": 304,
+    "numberofStops": 304,
+    "fare": 1875
+  },
+  {
+    "sectionNumber": 305,
+    "numberofStops": 305,
+    "fare": 1880
+  },
+  {
+    "sectionNumber": 306,
+    "numberofStops": 306,
+    "fare": 1887
+  },
+  {
+    "sectionNumber": 307,
+    "numberofStops": 307,
+    "fare": 1894
+  },
+  {
+    "sectionNumber": 308,
+    "numberofStops": 308,
+    "fare": 1901
+  },
+  {
+    "sectionNumber": 309,
+    "numberofStops": 309,
+    "fare": 1906
+  },
+  {
+    "sectionNumber": 310,
+    "numberofStops": 310,
+    "fare": 1913
+  },
+  {
+    "sectionNumber": 311,
+    "numberofStops": 311,
+    "fare": 1918
+  },
+  {
+    "sectionNumber": 312,
+    "numberofStops": 312,
+    "fare": 1925
+  },
+  {
+    "sectionNumber": 313,
+    "numberofStops": 313,
+    "fare": 1930
+  },
+  {
+    "sectionNumber": 314,
+    "numberofStops": 314,
+    "fare": 1937
+  },
+  {
+    "sectionNumber": 315,
+    "numberofStops": 315,
+    "fare": 1944
+  },
+  {
+    "sectionNumber": 316,
+    "numberofStops": 316,
+    "fare": 1949
+  },
+  {
+    "sectionNumber": 317,
+    "numberofStops": 317,
+    "fare": 1956
+  },
+  {
+    "sectionNumber": 318,
+    "numberofStops": 318,
+    "fare": 1961
+  },
+  {
+    "sectionNumber": 319,
+    "numberofStops": 319,
+    "fare": 1968
+  },
+  {
+    "sectionNumber": 320,
+    "numberofStops": 320,
+    "fare": 1973
+  },
+  {
+    "sectionNumber": 321,
+    "numberofStops": 321,
+    "fare": 1980
+  },
+  {
+    "sectionNumber": 322,
+    "numberofStops": 322,
+    "fare": 1987
+  },
+  {
+    "sectionNumber": 323,
+    "numberofStops": 323,
+    "fare": 1993
+  },
+  {
+    "sectionNumber": 324,
+    "numberofStops": 324,
+    "fare": 1999
+  },
+  {
+    "sectionNumber": 325,
+    "numberofStops": 325,
+    "fare": 2005
+  },
+  {
+    "sectionNumber": 326,
+    "numberofStops": 326,
+    "fare": 2012
+  },
+  {
+    "sectionNumber": 327,
+    "numberofStops": 327,
+    "fare": 2017
+  },
+  {
+    "sectionNumber": 328,
+    "numberofStops": 328,
+    "fare": 2024
+  },
+  {
+    "sectionNumber": 329,
+    "numberofStops": 329,
+    "fare": 2029
+  },
+  {
+    "sectionNumber": 330,
+    "numberofStops": 330,
+    "fare": 2036
+  },
+  {
+    "sectionNumber": 331,
+    "numberofStops": 331,
+    "fare": 2043
+  },
+  {
+    "sectionNumber": 332,
+    "numberofStops": 332,
+    "fare": 2048
+  },
+  {
+    "sectionNumber": 333,
+    "numberofStops": 333,
+    "fare": 2055
+  },
+  {
+    "sectionNumber": 334,
+    "numberofStops": 334,
+    "fare": 2060
+  },
+  {
+    "sectionNumber": 335,
+    "numberofStops": 335,
+    "fare": 2067
+  },
+  {
+    "sectionNumber": 336,
+    "numberofStops": 336,
+    "fare": 2072
+  },
+  {
+    "sectionNumber": 337,
+    "numberofStops": 337,
+    "fare": 2079
+  },
+  {
+    "sectionNumber": 338,
+    "numberofStops": 338,
+    "fare": 2086
+  },
+  {
+    "sectionNumber": 339,
+    "numberofStops": 339,
+    "fare": 2091
+  },
+  {
+    "sectionNumber": 340,
+    "numberofStops": 340,
+    "fare": 2098
+  },
+  {
+    "sectionNumber": 341,
+    "numberofStops": 341,
+    "fare": 2103
+  },
+  {
+    "sectionNumber": 342,
+    "numberofStops": 342,
+    "fare": 2110
+  },
+  {
+    "sectionNumber": 343,
+    "numberofStops": 343,
+    "fare": 2115
+  },
+  {
+    "sectionNumber": 344,
+    "numberofStops": 344,
+    "fare": 2122
+  },
+  {
+    "sectionNumber": 345,
+    "numberofStops": 345,
+    "fare": 2129
+  },
+  {
+    "sectionNumber": 346,
+    "numberofStops": 346,
+    "fare": 2134
+  },
+  {
+    "sectionNumber": 347,
+    "numberofStops": 347,
+    "fare": 2141
+  },
+  {
+    "sectionNumber": 348,
+    "numberofStops": 348,
+    "fare": 2146
+  },
+  {
+    "sectionNumber": 349,
+    "numberofStops": 349,
+    "fare": 2153
+  },
+  {
+    "sectionNumber": 350,
+    "numberofStops": 350,
+    "fare": 2159
+  }
+]

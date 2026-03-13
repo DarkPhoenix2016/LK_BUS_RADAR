@@ -1,0 +1,160 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --popover: #ffffff;
+  --popover-foreground: #0f172a;
+  --primary: #2563eb;
+  --primary-foreground: #ffffff;
+  --secondary: #f1f5f9;
+  --secondary-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #eff6ff;
+  --accent-foreground: #1d4ed8;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #3b82f6;
+  --radius: 0.75rem;
+
+  /* Transport Brand Colors */
+  --bus-online: #10b981;
+  --bus-offline: #94a3b8;
+  --bus-private: #8b5cf6;
+  --bus-sltb: #f59e0b;
+
+  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --shadow-md: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+@theme inline {
+  --font-sans: 'Inter', system-ui, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* ── Custom UI Classes ────────────────────────────────── */
+
+.glass-panel {
+  @apply bg-white/90 backdrop-blur-md border border-white/20 shadow-lg;
+}
+
+.map-control {
+  @apply bg-white border border-slate-200 shadow-md rounded-xl hover:bg-slate-50 transition-colors p-2;
+}
+
+.status-badge {
+  @apply px-2.5 py-0.5 rounded-full text-xs font-semibold border;
+}
+
+.status-online {
+  @apply bg-emerald-50 text-emerald-700 border-emerald-200;
+}
+
+.status-offline {
+  @apply bg-slate-50 text-slate-600 border-slate-200;
+}
+
+.card-hover {
+  @apply transition-all duration-300 hover:shadow-md hover:-translate-y-0.5 active:translate-y-0;
+}
+
+/* ── Leaflet Professional Overrides ───────────────────── */
+
+.leaflet-container {
+  @apply bg-slate-100;
+  z-index: 1;
+}
+
+.leaflet-control-zoom {
+  border: none !important;
+  box-shadow: var(--shadow-md) !important;
+}
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+  @apply !bg-white !text-slate-700 !border-slate-200;
+  width: 36px !important;
+  height: 36px !important;
+  line-height: 36px !important;
+}
+
+.leaflet-control-zoom-in {
+  border-radius: 10px 10px 0 0 !important;
+}
+
+.leaflet-control-zoom-out {
+  border-radius: 0 0 10px 10px !important;
+}
+
+.leaflet-popup-content-wrapper {
+  @apply !rounded-xl !shadow-xl !border !border-slate-100 !p-0 !overflow-hidden;
+}
+
+.leaflet-popup-content {
+  @apply !m-0;
+}
+
+.custom-bus-marker {
+  @apply transition-transform duration-500 ease-in-out;
+}
+
+/* ── Scrollbar ────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-200 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-300;
+}
