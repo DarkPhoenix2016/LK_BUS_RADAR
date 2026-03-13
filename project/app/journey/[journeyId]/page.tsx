@@ -67,18 +67,39 @@ export default function JourneyPage() {
       const { data, error } = await safeFetch(API_ENDPOINTS.JOURNEY_ACTIVE, {
         headers: { Authorization: `Bearer ${token}` },
       });
+      console.log("[Journey] Active API Response:", { data, error });
+      
       if (!mountedRef.current) return;
-      if (error || !data?.journey) { setLoading(false); return; }
+      if (error) {
+        console.error("[Journey] Load error:", error);
+        setLoading(false);
+        return;
+      }
+      if (!data?.journey) {
+        console.warn("[Journey] No active journey found in response");
+        setLoading(false);
+        return;
+      }
+
       setJourney(data.journey);
       setStops(data.stops || []);
       setLive(data.live || null);
-      setBusNumber(data.busNumber || data.journey?.busNumber || null);
-      setRouteNumber(data.routeNumber || data.journey?.routeNumber || null);
-      setRouteStartName(data.routeStartName || data.journey?.routeStartName || null);
-      setRouteEndName(data.routeEndName || data.journey?.routeEndName || null);
+      
+      // Use explicit top-level fields, fall back to denormalized journey fields
+      const bNum = data.busNumber || data.journey?.busNumber;
+      const rNum = data.routeNumber || data.journey?.routeNumber;
+      const rsName = data.routeStartName || data.journey?.routeStartName;
+      const reName = data.routeEndName || data.journey?.routeEndName;
+      
+      setBusNumber(bNum || null);
+      setRouteNumber(rNum || null);
+      setRouteStartName(rsName || null);
+      setRouteEndName(reName || null);
+      
       setLoading(false);
       startPolling(data.journey.deviceId);
-    } catch {
+    } catch (err) {
+      console.error("[Journey] Unexpected error in loadJourney:", err);
       if (mountedRef.current) setLoading(false);
     }
   }
