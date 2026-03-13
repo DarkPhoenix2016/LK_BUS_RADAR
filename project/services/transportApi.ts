@@ -232,32 +232,41 @@ export interface FareSection {
   price: number;
 }
 
-const rawBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
-const BASE_URL = rawBaseUrl.endsWith('/api') ? rawBaseUrl.slice(0, -4) : rawBaseUrl;
+const rawBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
+
+/** Helper to ensure URLs have the correct /api or /api/api prefix */
+function getUrl(path: string) {
+  // If the path starts with /public, it needs /api/api
+  // If it starts with /booking, /user, /journey, it needs /api
+  if (path.startsWith('/public')) {
+    return `${rawBaseUrl}/api${path}`;
+  }
+  return `${rawBaseUrl}${path}`;
+}
 
 export const API_ENDPOINTS = {
-  ROUTES: `${BASE_URL}/api/public/routes`,
-  DEVICES: `${BASE_URL}/api/public/devices-for-live-map`,
-  ROUTE_META: (id: string) => `${BASE_URL}/api/public/withMeta/${id}`,
-  TIMETABLE: (id: string) => `${BASE_URL}/api/public/timetable/bus-turn-running-slots/${id}`,
-  BOOKING_CREATE: `${BASE_URL}/api/booking/create`,
-  BOOKING_MY: `${BASE_URL}/api/booking/my`,
-  BOOKING_GET: (id: string) => `${BASE_URL}/api/booking/${id}`,
-  BOOKING_CANCEL: (id: string) => `${BASE_URL}/api/booking/${id}/cancel`,
-  BOOKING_PAY: (id: string) => `${BASE_URL}/api/booking/${id}/pay`,
-  USER_PROFILE: `${BASE_URL}/api/user/profile`,
-  USER_POINTS: `${BASE_URL}/api/user/points`,
-  USER_POINTS_TOPUP: `${BASE_URL}/api/user/points/topup`,
-  BUS_GET: (id: string) => `${BASE_URL}/api/public/bus/${id}`,
-  BUS_STANDS: `${BASE_URL}/api/public/bus-stands`,
-  BUS_STANDS_DISTRICTS: `${BASE_URL}/api/public/bus-stands/districts`,
-  BUS_STOPS_SEARCH: (q: string) => `${BASE_URL}/api/public/bus-stops/search?q=${encodeURIComponent(q)}`,
-  ROUTES_BY_STOPS: (params: string) => `${BASE_URL}/api/public/routes-by-stops?${params}`,
-  JOURNEY_ACTIVE:  `${BASE_URL}/api/journey/active`,
-  JOURNEY_BOARD:   `${BASE_URL}/api/journey/board`,
-  JOURNEY_ALIGHT:  `${BASE_URL}/api/journey/alight`,
-  JOURNEY_HISTORY: `${BASE_URL}/api/journey/history`,
-  JOURNEY_LIVE:    (deviceId: string) => `${BASE_URL}/api/public/live-vehicle/${deviceId}`,
+  ROUTES: getUrl('/public/routes'),
+  DEVICES: getUrl('/public/devices-for-live-map'),
+  ROUTE_META: (id: string) => getUrl(`/public/withMeta/${id}`),
+  TIMETABLE: (id: string) => getUrl(`/public/timetable/bus-turn-running-slots/${id}`),
+  BOOKING_CREATE: getUrl('/booking/create'),
+  BOOKING_MY: getUrl('/booking/my'),
+  BOOKING_GET: (id: string) => getUrl(`/booking/${id}`),
+  BOOKING_CANCEL: (id: string) => getUrl(`/booking/${id}/cancel`),
+  BOOKING_PAY: (id: string) => getUrl(`/booking/${id}/pay`),
+  USER_PROFILE: getUrl('/user/profile'),
+  USER_POINTS: getUrl('/user/points'),
+  USER_POINTS_TOPUP: getUrl('/user/points/topup'),
+  BUS_GET: (id: string) => getUrl(`/public/bus/${id}`),
+  BUS_STANDS: getUrl('/public/bus-stands'),
+  BUS_STANDS_DISTRICTS: getUrl('/public/bus-stands/districts'),
+  BUS_STOPS_SEARCH: (q: string) => getUrl(`/public/bus-stops/search?q=${encodeURIComponent(q)}`),
+  ROUTES_BY_STOPS: (params: string) => getUrl(`/public/routes-by-stops?${params}`),
+  JOURNEY_ACTIVE:  getUrl('/journey/active'),
+  JOURNEY_BOARD:   getUrl('/journey/board'),
+  JOURNEY_ALIGHT:  getUrl('/journey/alight'),
+  JOURNEY_HISTORY: getUrl('/journey/history'),
+  JOURNEY_LIVE:    (deviceId: string) => getUrl(`/public/live-vehicle/${deviceId}`),
 };
 
 export const fetcher = (url: string) =>
