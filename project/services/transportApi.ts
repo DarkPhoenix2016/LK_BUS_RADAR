@@ -259,7 +259,11 @@ export const API_ENDPOINTS = {
   JOURNEY_LIVE:    (deviceId: string) => `${BASE_URL}/api/public/live-vehicle/${deviceId}`,
 };
 
-export const fetcher = (url: string) => fetch(url).then((res) => res.json());
+export const fetcher = (url: string) =>
+  fetch(url).then((res) => {
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  });
 
 /** Safe JSON fetch — returns null and error message if response is not JSON */
 export async function safeFetch(url: string, options?: RequestInit): Promise<{ data: any; error: string | null }> {

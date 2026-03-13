@@ -319,7 +319,7 @@ router.get('/timetable/bus-turn-running-slots/:routeId', async (req, res) => {
           runningSlotId: String(slot._id),
           busTurnStatus: turn.busTurnStatus || '',
           deviceId: turn.deviceId || null,
-          createdAt: turn.createdAt ? turn.createdAt.toISOString() : null,
+          createdAt: turn.createdAt ? (turn.createdAt instanceof Date ? turn.createdAt.toISOString() : String(turn.createdAt)) : null,
           loadingStartingTime: turn.loadingStartingTime || '0000',
           runningSlot: {
             id: String(slot._id),
