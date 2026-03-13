@@ -234,14 +234,11 @@ export interface FareSection {
 
 const rawBaseUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000').replace(/\/$/, '');
 
-/** Helper to ensure URLs have the correct /api or /api/api prefix */
+/** Helper to ensure URLs have the correct /api/api prefix */
 function getUrl(path: string) {
-  // If the path starts with /public, it needs /api/api
-  // If it starts with /booking, /user, /journey, it needs /api
-  if (path.startsWith('/public')) {
-    return `${rawBaseUrl}/api${path}`;
-  }
-  return `${rawBaseUrl}${path}`;
+  // All endpoints are mounted under /api in the server, 
+  // and the environment requires an additional /api prefix.
+  return `${rawBaseUrl}/api${path}`;
 }
 
 export const API_ENDPOINTS = {
