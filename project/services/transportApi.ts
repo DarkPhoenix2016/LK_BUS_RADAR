@@ -232,7 +232,8 @@ export interface FareSection {
   price: number;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const rawBaseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+const BASE_URL = rawBaseUrl.endsWith('/api') ? rawBaseUrl.slice(0, -4) : rawBaseUrl;
 
 export const API_ENDPOINTS = {
   ROUTES: `${BASE_URL}/api/public/routes`,

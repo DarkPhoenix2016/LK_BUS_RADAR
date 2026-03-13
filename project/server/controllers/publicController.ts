@@ -263,13 +263,16 @@ router.get('/withMeta/:routeId', async (req, res) => {
 router.get('/timetable/bus-turn-running-slots/:routeId', async (req, res) => {
   try {
     const routeId = String(req.params.routeId);
+    console.log(`[Timetable] Fetching slots for route: ${routeId}`);
     const slots = await RunningSlot.find({ routeId }).lean();
     if (slots.length === 0) {
+      console.log(`[Timetable] No slots found for route: ${routeId}`);
       return res.status(200).json([]);
     }
 
     const slotIds = slots.map((s) => String(s._id));
-    const runningNumberIds = [...new Set(slots.map((s) => String(s.runningNumberId)).filter(Boolean))];
+    const runningNumberIds = [...new Set(slots.map((s) => s.runningNumberId ? String(s.runningNumberId) : null).filter(Boolean))];
+    console.log(`[Timetable] Found ${slots.length} slots, ${runningNumberIds.length} running numbers`);
 
     const [runningNumbers, slotStops, busTurns] = await Promise.all([
       RunningNumber.find({
@@ -281,6 +284,8 @@ router.get('/timetable/bus-turn-running-slots/:routeId', async (req, res) => {
       RunningSlotStop.find({ slotId: { $in: slotIds } }).lean(),
       BusTurn.find({ runningSlotId: { $in: slotIds } }).lean(),
     ]);
+
+    console.log(`[Timetable] Resolved: ${runningNumbers.length} RNs, ${slotStops.length} stops, ${busTurns.length} turns`);
 
     const stopIds = [...new Set(slotStops.map((s) => String(s.stopId)))];
     const [stops, liveVehicles] = await Promise.all([
@@ -319,7 +324,7 @@ router.get('/timetable/bus-turn-running-slots/:routeId', async (req, res) => {
           runningSlotId: String(slot._id),
           busTurnStatus: turn.busTurnStatus || '',
           deviceId: turn.deviceId || null,
-          createdAt: turn.createdAt ? (turn.createdAt instanceof Date ? turn.createdAt.toISOString() : String(turn.createdAt)) : null,
+          createdAt: turn.createdAt ? new Date(turn.createdAt).toISOString() : null,
           loadingStartingTime: turn.loadingStartingTime || '0000',
           runningSlot: {
             id: String(slot._id),
@@ -351,9 +356,10 @@ router.get('/timetable/bus-turn-running-slots/:routeId', async (req, res) => {
       .filter(Boolean)
       .sort((a, b) => String(a.loadingStartingTime).localeCompare(String(b.loadingStartingTime)));
 
+    console.log(`[Timetable] Successfully mapped ${entries.length} entries`);
     return res.status(200).json(entries);
   } catch (error) {
-    console.error('[GET /api/public/timetable/bus-turn-running-slots/:routeId] error', error.message);
+    console.error('[GET /api/public/timetable/bus-turn-running-slots/:routeId] error', error);
     return res.status(500).json({ success: false, error: error.message });
   }
 });
