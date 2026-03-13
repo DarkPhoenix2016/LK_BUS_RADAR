@@ -44,7 +44,7 @@ function SlotList({
   const nearestRef = useRef<HTMLDivElement | null>(null);
 
   // Deduplicate
-  const unique = slots.filter(
+  const unique = (Array.isArray(slots) ? slots : []).filter(
     (e, i, arr) => arr.findIndex((x) => x.runningSlotId === e.runningSlotId) === i
   );
 
@@ -176,7 +176,7 @@ export function RouteTimetableContent({
     );
   }
 
-  if (error || !entries) {
+  if (error || !Array.isArray(entries)) {
     return (
       <div className="px-6 py-8 text-center">
         <p className="text-sm font-bold text-slate-400">Failed to load timetable.</p>
@@ -186,8 +186,8 @@ export function RouteTimetableContent({
 
   const timeKey = dateType === "weekend" ? "weekendTime" : "weekdayTime";
 
-  const upSlots = entries.filter((e) => e.runningSlot.runningDirection === "up");
-  const downSlots = entries.filter((e) => e.runningSlot.runningDirection === "down");
+  const upSlots   = entries.filter((e) => e.runningSlot?.runningDirection === "up");
+  const downSlots = entries.filter((e) => e.runningSlot?.runningDirection === "down");
 
   const upLabel = getDirectionLabel(upSlots);
   const downLabel = getDirectionLabel(downSlots);
