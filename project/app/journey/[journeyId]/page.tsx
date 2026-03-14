@@ -6,9 +6,10 @@ import dynamic from "next/dynamic";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import {
-  Bus, MapPin, QrCode, Shield, ChevronDown, ChevronUp, Loader2,
-  Navigation, CheckCircle, AlertTriangle, X, XCircle, Coins, ArrowUpDown,
+  Bus, MapPin, QrCode, Shield, ChevronDown, Loader2,
+  Navigation, CheckCircle, AlertTriangle, X, XCircle, Coins,
   Hash, Route as RouteIcon, Info, Clock, Users, Wallet, Zap, Footprints,
+  ArrowUp, ArrowDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -55,14 +56,15 @@ export default function JourneyPage() {
   const [loading,          setLoading]          = useState(true);
   const [showExitWarn,     setShowExitWarn]     = useState(false);
   const [scan,             setScan]             = useState<ScanState>({ phase: "idle" });
-  const [dirOverride,      setDirOverride]      = useState<"up" | "down" | null>(null);
   const [mobilePanel,      setMobilePanel]      = useState(false);
   const [panelMinimized,   setPanelMinimized]   = useState(false);
   const [busPassengers,    setBusPassengers]    = useState<{ activeJourneys: number; seatingCapacity: number | null; available: number | null } | null>(null);
   const [pointBalance,     setPointBalance]     = useState<number | null>(null);
+  const [adminClosed,      setAdminClosed]      = useState<"completed" | "cancelled" | null>(null);
 
   const mountedRef = useRef(true);
   const pollRef    = useRef<ReturnType<typeof setInterval> | null>(null);
+  const statusPollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const scannerRef = useRef<any>(null);
 
   // ── load journey ─────────────────────────────────────────────────────────────
@@ -72,6 +74,7 @@ export default function JourneyPage() {
     return () => {
       mountedRef.current = false;
       if (pollRef.current) clearInterval(pollRef.current);
+      if (statusPollRef.current) clearInterval(statusPollRef.current);
     };
   }, [journeyId]);
 
@@ -156,6 +159,28 @@ export default function JourneyPage() {
         if (mountedRef.current && pointsData?.data?.balance !== undefined) setPointBalance(pointsData.data.balance);
       } catch { /* ignore */ }
     }, 30_000);
+
+    // Poll journey status every 15s to detect admin-initiated close
+    if (statusPollRef.current) clearInterval(statusPollRef.current);
+    statusPollRef.current = setInterval(async () => {
+      if (!mountedRef.current) return;
+      try {
+        const token = await getToken();
+        const { data } = await safeFetch(API_ENDPOINTS.JOURNEY_BY_ID(journeyId), {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!mountedRef.current) return;
+        const newStatus = data?.journey?.status;
+        if (newStatus && newStatus !== "active") {
+          // Admin closed the journey — update state and stop polling
+          if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null; }
+          if (statusPollRef.current) { clearInterval(statusPollRef.current); statusPollRef.current = null; }
+          setAdminClosed(newStatus as "completed" | "cancelled");
+          setJourney(data.journey);
+          if (data.stops) setStops(data.stops);
+        }
+      } catch { /* ignore */ }
+    }, 15_000);
   }
 
   // ── prevent navigation away ──────────────────────────────────────────────────
@@ -294,6 +319,26 @@ export default function JourneyPage() {
     );
   }
 
+  if (journey.status === "cancelled") {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-4 px-6">
+        <div className="w-20 h-20 rounded-2xl bg-red-100 flex items-center justify-center">
+          <XCircle className="text-red-500" size={40} />
+        </div>
+        <h2 className="text-xl font-bold text-slate-900 text-center">Journey Cancelled</h2>
+        <p className="text-slate-500 text-sm text-center max-w-xs">
+          This journey was cancelled by an administrator. Any fare charges have been reversed.
+        </p>
+        <Button onClick={() => router.replace("/journeys")} className="rounded-xl mt-2">
+          View Journey History
+        </Button>
+        <Button variant="outline" onClick={() => router.replace("/")} className="rounded-xl">
+          Back to Map
+        </Button>
+      </div>
+    );
+  }
+
   if (journey.status === "completed") {
     const durationMs = journey.startedAt && journey.endedAt
       ? new Date(journey.endedAt).getTime() - new Date(journey.startedAt).getTime()
@@ -339,6 +384,14 @@ export default function JourneyPage() {
                 <ChevronDown size={13} className="rotate-90" /> Journey History
               </button>
             </div>
+
+            {/* Admin-closed notice */}
+            {adminClosed === "completed" && (
+              <div className="mx-6 mt-4 px-4 py-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+                <Shield size={16} className="text-amber-500 mt-0.5 shrink-0" />
+                <p className="text-xs font-bold text-amber-700">This journey was completed by an administrator.</p>
+              </div>
+            )}
 
             {/* Celebration header */}
             <div className="px-6 pt-4 pb-5 border-b border-slate-100">
@@ -489,6 +542,14 @@ export default function JourneyPage() {
             </div>
 
             <div className="px-5 pb-10 pt-2 space-y-4">
+              {/* Admin-closed notice */}
+              {adminClosed === "completed" && (
+                <div className="px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2">
+                  <Shield size={14} className="text-amber-500 mt-0.5 shrink-0" />
+                  <p className="text-xs font-bold text-amber-700">Completed by an administrator.</p>
+                </div>
+              )}
+
               {/* Header row */}
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0">
@@ -606,7 +667,6 @@ export default function JourneyPage() {
     : boardingIdx;
 
   const stopsAhead  = stops.length - currentBusStopIdx - 1;
-  const displayDir  = dirOverride ?? journey.direction.toLowerCase();
   const scannerOpen = scan.phase !== "idle";
 
   return (
@@ -625,9 +685,7 @@ export default function JourneyPage() {
           boardingIdx={boardingIdx}
           currentBusStopIdx={currentBusStopIdx}
           stopsAhead={stopsAhead}
-          displayDir={displayDir}
           busPassengers={busPassengers}
-          onDirOverride={setDirOverride}
           onScan={openScanner}
         />
       </div>
@@ -804,9 +862,7 @@ export default function JourneyPage() {
                         boardingIdx={boardingIdx}
                         currentBusStopIdx={currentBusStopIdx}
                         stopsAhead={stopsAhead}
-                        displayDir={displayDir}
                         busPassengers={busPassengers}
-                        onDirOverride={setDirOverride}
                         onScan={() => { setMobilePanel(false); openScanner(); }}
                       />
                     </div>
@@ -957,8 +1013,7 @@ export default function JourneyPage() {
 /* ── Shared side panel content ───────────────────────────────────────────────── */
 function SidePanelContent({
   journey, stops, busNumber, routeNumber, routeStartName, routeEndName, live,
-  boardingIdx, currentBusStopIdx, stopsAhead, displayDir, busPassengers,
-  onDirOverride, onScan,
+  boardingIdx, currentBusStopIdx, stopsAhead, busPassengers, onScan,
 }: {
   journey: Journey;
   stops: JourneyStop[];
@@ -970,11 +1025,28 @@ function SidePanelContent({
   boardingIdx: number;
   currentBusStopIdx: number;
   stopsAhead: number;
-  displayDir: string;
   busPassengers: { activeJourneys: number; seatingCapacity: number | null; available: number | null } | null;
-  onDirOverride: (d: "up" | "down") => void;
   onScan: () => void;
 }) {
+  // Auto-detected direction from the journey (set at boarding time by the backend)
+  const dir = journey.direction; // "UP" | "DOWN"
+  const isUp = dir === "UP";
+
+  // Distance traveled so far (boarding stop → current bus stop along stop sequence)
+  let distanceSoFar = 0;
+  const minIdx = Math.min(boardingIdx, currentBusStopIdx);
+  const maxIdx = Math.max(boardingIdx, currentBusStopIdx);
+  for (let i = minIdx; i < maxIdx; i++) {
+    const s1 = stops[i];
+    const s2 = stops[i + 1];
+    if (s1?.latitude && s1?.longitude && s2?.latitude && s2?.longitude) {
+      distanceSoFar += haversineKm(
+        parseFloat(s1.latitude), parseFloat(s1.longitude),
+        parseFloat(s2.latitude), parseFloat(s2.longitude)
+      );
+    }
+  }
+
   return (
     <>
       {/* Header */}
@@ -990,12 +1062,27 @@ function SidePanelContent({
               <span className="text-emerald-600 text-xs font-bold">LIVE</span>
             </div>
           </div>
+          {/* Auto-direction badge */}
+          <div className={cn(
+            "flex items-center gap-1 rounded-lg px-2.5 py-1 shrink-0",
+            isUp ? "bg-blue-50 border border-blue-200" : "bg-violet-50 border border-violet-200"
+          )}>
+            {isUp
+              ? <ArrowUp size={11} className="text-blue-600" />
+              : <ArrowDown size={11} className="text-violet-600" />
+            }
+            <span className={cn("text-[10px] font-black uppercase tracking-wider",
+              isUp ? "text-blue-600" : "text-violet-600"
+            )}>
+              {isUp ? "UP" : "DOWN"}
+            </span>
+          </div>
         </div>
 
         {/* Route name */}
         {(routeStartName || routeEndName) && (
           <p className="text-slate-600 text-xs font-semibold truncate mb-2">
-            {routeStartName} → {routeEndName}
+            {isUp ? `${routeStartName} → ${routeEndName}` : `${routeEndName} → ${routeStartName}`}
           </p>
         )}
 
@@ -1019,7 +1106,7 @@ function SidePanelContent({
         </div>
       </div>
 
-      {/* Stats */}
+      {/* Stats — 4-cell grid: stops ahead, speed, distance, stops passed */}
       <div className="px-5 py-3 border-b border-slate-100">
         <div className="grid grid-cols-2 gap-2">
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
@@ -1027,8 +1114,18 @@ function SidePanelContent({
             <p className="text-xs text-slate-500 mt-0.5">Stops ahead</p>
           </div>
           <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
-            <p className="text-2xl font-black text-slate-900">{Math.round(live?.speed ?? 0)}</p>
-            <p className="text-xs text-slate-500 mt-0.5">km/h</p>
+            <p className="text-2xl font-black text-primary">{Math.round(live?.speed ?? 0)}</p>
+            <p className="text-xs text-slate-500 mt-0.5">km/h now</p>
+          </div>
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+            <p className="text-2xl font-black text-slate-900">{distanceSoFar.toFixed(1)}</p>
+            <p className="text-xs text-slate-500 mt-0.5">km traveled</p>
+          </div>
+          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-center">
+            <p className="text-2xl font-black text-slate-900">
+              {Math.max(0, currentBusStopIdx - boardingIdx)}
+            </p>
+            <p className="text-xs text-slate-500 mt-0.5">Stops passed</p>
           </div>
         </div>
 
@@ -1065,35 +1162,18 @@ function SidePanelContent({
         )}
       </div>
 
-      {/* Direction toggle */}
-      <div className="px-5 py-3 border-b border-slate-100 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <ArrowUpDown size={13} className="text-slate-400" />
-          <span className="text-xs font-semibold text-slate-600">Direction</span>
-        </div>
-        <div className="flex items-center gap-0.5 bg-slate-100 rounded-lg p-0.5">
-          <button
-            onClick={() => onDirOverride("up")}
-            className={cn("px-3 py-1 text-xs font-bold rounded-md transition-all flex items-center gap-0.5",
-              displayDir === "up" ? "bg-white text-primary shadow-sm" : "text-slate-400 hover:text-slate-600"
-            )}
-          >
-            <ChevronUp size={12} />UP
-          </button>
-          <button
-            onClick={() => onDirOverride("down")}
-            className={cn("px-3 py-1 text-xs font-bold rounded-md transition-all flex items-center gap-0.5",
-              displayDir === "down" ? "bg-white text-primary shadow-sm" : "text-slate-400 hover:text-slate-600"
-            )}
-          >
-            <ChevronDown size={12} />DOWN
-          </button>
-        </div>
-      </div>
-
       {/* Vertical stops tree — scrollable */}
       <div className="flex-1 overflow-y-auto px-5 py-3">
-        <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3">Route Stops</p>
+        <div className="flex items-center justify-between mb-3">
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Route Stops</p>
+          <div className={cn(
+            "flex items-center gap-1 text-[10px] font-bold rounded-md px-2 py-0.5",
+            isUp ? "bg-blue-50 text-blue-600" : "bg-violet-50 text-violet-600"
+          )}>
+            {isUp ? <ArrowUp size={10} /> : <ArrowDown size={10} />}
+            {isUp ? "Upward" : "Downward"}
+          </div>
+        </div>
         <StopsTree stops={stops} boardingIdx={boardingIdx} currentIdx={currentBusStopIdx} />
       </div>
 

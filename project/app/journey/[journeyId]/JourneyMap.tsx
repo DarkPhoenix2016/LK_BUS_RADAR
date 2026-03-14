@@ -81,17 +81,14 @@ function CameraController({ lat, lon }: { lat: number; lon: number }) {
 }
 
 /* ── rotating bus marker ─────────────────────────────────────────────────── */
+const BUS_SVG = `<svg viewBox="0 0 1024 1024" width="48" height="48" xmlns="http://www.w3.org/2000/svg">
+  <path d="M63.3 512.2a448.5 448 0 1 0 897 0 448.5 448 0 1 0-897 0Z" fill="#4D6BFF"/>
+  <path d="M416.09375 605.09375c1.21875 0.5625 2.15625 1.5 2.71875 2.71875l82.3125 175.6875c3.1875 6.84375 12.84375 7.03125 15.75 0.375l201.84375-465.75c3.5625-8.15625-4.78125-16.5-12.9375-12.9375L240.125 507.03125c-6.75 2.90625-6.5625 12.5625 0.375 15.75l175.59375 82.3125z" fill="#ffffff"/>
+</svg>`;
+
 function createBusIcon(heading: number) {
-  const svg = `
-<svg viewBox="0 0 1024 1024" width="48" height="48" xmlns="http://www.w3.org/2000/svg">
-  <g transform="rotate(${heading} 512 512)">
-    <path d="M63.3 512.2a448.5 448 0 1 0 897 0 448.5 448 0 1 0-897 0Z" fill="#4D6BFF"/>
-    <path d="M416.09375 605.09375c1.21875 0.5625 2.15625 1.5 2.71875 2.71875l82.3125 175.6875c3.1875 6.84375 12.84375 7.03125 15.75 0.375l201.84375-465.75c3.5625-8.15625-4.78125-16.5-12.9375-12.9375L240.125 507.03125c-6.75 2.90625-6.5625 12.5625 0.375 15.75l175.59375 82.3125z" fill="#ffffff"/>
-  </g>
-</svg>
-`;
   return L.divIcon({
-    html: svg,
+    html: `<div class="lk-bus-icon" style="width:48px;height:48px;transform:rotate(${heading}deg);transition:transform 1.2s cubic-bezier(0.25,0.46,0.45,0.94)">${BUS_SVG}</div>`,
     iconSize: [48, 48],
     iconAnchor: [24, 24],
     className: "",
@@ -170,11 +167,18 @@ export default function JourneyMap({
       .catch(() => {/* fallback to straight lines */});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Update bus marker position smoothly
+  // Update bus marker position and heading smoothly (CSS transition handles rotation animation)
   useEffect(() => {
     if (!live?.lat || !live?.lon || !markerRef.current) return;
     markerRef.current.setLatLng([live.lat, live.lon]);
-    markerRef.current.setIcon(createBusIcon(live.heading ?? 0));
+    // Rotate the inner div via CSS transform — no icon replacement needed so transition plays
+    const el = markerRef.current.getElement();
+    if (el) {
+      const inner = el.querySelector<HTMLElement>(".lk-bus-icon");
+      if (inner) {
+        inner.style.transform = `rotate(${live.heading ?? 0}deg)`;
+      }
+    }
   }, [live]);
 
   const displayCoords = roadCoords.length > 1 ? roadCoords : fallbackCoords;

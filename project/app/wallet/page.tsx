@@ -14,7 +14,10 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import {
   ArrowDownLeft, ArrowUpRight, Coins, Loader2, Search, TrendingUp, UserCircle, Wallet,
+  ChevronLeft, ChevronRight,
 } from "lucide-react";
+
+const TX_PER_PAGE = 20;
 
 type TxFilter = "all" | "credit" | "debit";
 
@@ -32,6 +35,7 @@ export default function WalletPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
+  const [txPage, setTxPage] = useState(1);
 
   useEffect(() => {
     if (user) loadWallet();
@@ -62,7 +66,7 @@ export default function WalletPage() {
     router.push(`/payment/topup?amount=${amount}`);
   };
 
-  const filteredTransactions = useMemo(() => {
+  const allFiltered = useMemo(() => {
     const fromTs = fromDate ? new Date(`${fromDate}T00:00:00`).getTime() : null;
     const toTs = toDate ? new Date(`${toDate}T23:59:59`).getTime() : null;
 
@@ -78,6 +82,10 @@ export default function WalletPage() {
       return true;
     });
   }, [transactions, txFilter, searchTerm, fromDate, toDate]);
+
+  const txTotalPages = Math.max(1, Math.ceil(allFiltered.length / TX_PER_PAGE));
+  const txSafePage = Math.min(txPage, txTotalPages);
+  const filteredTransactions = allFiltered.slice((txSafePage - 1) * TX_PER_PAGE, txSafePage * TX_PER_PAGE);
 
   if (authLoading) {
     return (
@@ -182,7 +190,7 @@ export default function WalletPage() {
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <Input
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => { setSearchTerm(e.target.value); setTxPage(1); }}
                 placeholder="Search by description"
                 className="h-10 rounded-xl pl-9"
               />
@@ -194,19 +202,19 @@ export default function WalletPage() {
             <div className="flex rounded-xl border border-slate-200 overflow-hidden h-10">
               <button
                 className={cn("px-3 text-xs font-bold", txFilter === "all" ? "bg-slate-900 text-white" : "bg-white text-slate-600")}
-                onClick={() => setTxFilter("all")}
+                onClick={() => { setTxFilter("all"); setTxPage(1); }}
               >
                 All
               </button>
               <button
                 className={cn("px-3 text-xs font-bold border-l border-slate-200", txFilter === "credit" ? "bg-emerald-600 text-white" : "bg-white text-slate-600")}
-                onClick={() => setTxFilter("credit")}
+                onClick={() => { setTxFilter("credit"); setTxPage(1); }}
               >
                 Credit
               </button>
               <button
                 className={cn("px-3 text-xs font-bold border-l border-slate-200", txFilter === "debit" ? "bg-red-500 text-white" : "bg-white text-slate-600")}
-                onClick={() => setTxFilter("debit")}
+                onClick={() => { setTxFilter("debit"); setTxPage(1); }}
               >
                 Debit
               </button>
@@ -215,12 +223,12 @@ export default function WalletPage() {
 
           <div>
             <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">From</Label>
-            <Input type="date" value={fromDate} onChange={(e) => setFromDate(e.target.value)} className="h-10 rounded-xl" />
+            <Input type="date" value={fromDate} onChange={(e) => { setFromDate(e.target.value); setTxPage(1); }} className="h-10 rounded-xl" />
           </div>
 
           <div>
             <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">To</Label>
-            <Input type="date" value={toDate} onChange={(e) => setToDate(e.target.value)} className="h-10 rounded-xl" />
+            <Input type="date" value={toDate} onChange={(e) => { setToDate(e.target.value); setTxPage(1); }} className="h-10 rounded-xl" />
           </div>
         </div>
 
@@ -236,6 +244,7 @@ export default function WalletPage() {
               setSearchTerm("");
               setFromDate("");
               setToDate("");
+              setTxPage(1);
             }}>
               Reset Filters
             </Button>
@@ -245,7 +254,7 @@ export default function WalletPage() {
             <div className="flex items-center justify-between">
               <p className="text-xs font-black uppercase tracking-widest text-slate-500">Transaction History</p>
               <Badge variant="outline" className="text-[10px] font-black border-slate-200 text-slate-600 bg-slate-50">
-                {filteredTransactions.length} item(s)
+                {allFiltered.length} item(s)
               </Badge>
             </div>
             {filteredTransactions.map((tx) => (
@@ -272,6 +281,19 @@ export default function WalletPage() {
                 </div>
               </div>
             ))}
+            {txTotalPages > 1 && (
+              <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                <p className="text-xs text-slate-400">Page {txSafePage} of {txTotalPages} · {allFiltered.length} transactions</p>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" className="rounded-xl" disabled={txSafePage <= 1} onClick={() => setTxPage(p => p - 1)}>
+                    <ChevronLeft size={14} /> Prev
+                  </Button>
+                  <Button variant="outline" size="sm" className="rounded-xl" disabled={txSafePage >= txTotalPages} onClick={() => setTxPage(p => p + 1)}>
+                    Next <ChevronRight size={14} />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

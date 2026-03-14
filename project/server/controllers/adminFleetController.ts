@@ -229,17 +229,50 @@ router.put('/configs/:id', async (req, res) => {
 
 router.get('/stats', async (req, res) => {
   try {
-    const [totalBuses, totalRoutes, totalSlots, onlineDevices, totalAdmins] = await Promise.all([
+    const Journey = require('../models/Journey');
+    const Booking = require('../models/Booking');
+
+    const [
+      totalBuses, totalRoutes, totalSlots, onlineDevices, totalAdmins,
+      bookingsByStatus, journeysByStatus, revenueAgg,
+    ] = await Promise.all([
       Bus.countDocuments(),
       Route.countDocuments(),
       RunningSlot.countDocuments(),
       LiveVehicle.countDocuments({ isOnline: true }),
       User.countDocuments({ role: 'admin' }),
+      Booking.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
+      Journey.aggregate([{ $group: { _id: '$status', count: { $sum: 1 } } }]),
+      Journey.aggregate([
+        { $match: { status: 'completed', fareCharged: { $ne: null } } },
+        { $group: { _id: null, total: { $sum: '$fareCharged' } } },
+      ]),
     ]);
+
+    const bookingMap = Object.fromEntries(bookingsByStatus.map(b => [b._id, b.count]));
+    const journeyMap = Object.fromEntries(journeysByStatus.map(j => [j._id, j.count]));
 
     res.json({
       success: true,
-      data: { totalBuses, totalRoutes, totalSlots, onlineDevices, totalAdmins },
+      data: {
+        totalBuses,
+        totalRoutes,
+        runningSlots: totalSlots,
+        onlineDevices,
+        totalAdmins,
+        bookings: {
+          draft: bookingMap.draft || 0,
+          confirmed: bookingMap.confirmed || 0,
+          cancelled: bookingMap.cancelled || 0,
+          completed: bookingMap.completed || 0,
+        },
+        journeys: {
+          active: journeyMap.active || 0,
+          completed: journeyMap.completed || 0,
+          cancelled: journeyMap.cancelled || 0,
+        },
+        totalRevenue: revenueAgg[0]?.total || 0,
+      },
     });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -1491,9 +1524,19 @@ const Journey = require('../models/Journey');
 
 router.get('/journeys', async (req, res) => {
   try {
-    const { status, page, perPage: pp } = req.query;
+    const { status, page, perPage: pp, search } = req.query;
     const filter = {};
     if (status && status !== 'all') filter.status = status;
+    if (search && search.trim()) {
+      const q = search.trim();
+      filter.$or = [
+        { userEmail: { $regex: q, $options: 'i' } },
+        { routeNumber: { $regex: q, $options: 'i' } },
+        { busNumber: { $regex: q, $options: 'i' } },
+        { boardingStopName: { $regex: q, $options: 'i' } },
+        { userId: { $regex: q, $options: 'i' } },
+      ];
+    }
 
     const p   = Math.max(1, Number(page) || 1);
     const per = Math.min(100, Math.max(1, Number(pp) || 25));
@@ -1589,6 +1632,107 @@ router.get('/journeys/stats', async (req, res) => {
         })),
       },
     });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/* ─────────────────────── Journey stops (for admin stop-selection) ─── */
+
+router.get('/journeys/:id/stops', async (req, res) => {
+  try {
+    const journey = await Journey.findById(req.params.id).lean();
+    if (!journey) return res.status(404).json({ success: false, error: 'Journey not found.' });
+    const { loadRouteStopsWithCoords } = require('../utils/journeyUtils');
+    const stops = await loadRouteStopsWithCoords(journey.routeId, journey.direction);
+    const mapped = stops.map(s => ({
+      stopId: s.stopId,
+      name: s.name,
+      latitude: s.latitude,
+      longitude: s.longitude,
+      displayOrder: s.displayOrder,
+    }));
+    res.json({ success: true, journey, stops: mapped });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/* ─────────────────────── Cancel Journey (admin) ─── */
+
+router.patch('/journeys/:id/cancel', async (req, res) => {
+  try {
+    const journey = await Journey.findById(req.params.id);
+    if (!journey) return res.status(404).json({ success: false, error: 'Journey not found.' });
+    if (journey.status !== 'active') {
+      return res.status(400).json({ success: false, error: `Journey is already ${journey.status}.` });
+    }
+    journey.status = 'cancelled';
+    journey.endedAt = new Date();
+    await journey.save();
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/* ─────────────────────── Complete Journey (admin) ─── */
+
+router.patch('/journeys/:id/complete', async (req, res) => {
+  try {
+    const { alightingStopId } = req.body;
+    if (!alightingStopId) {
+      return res.status(400).json({ success: false, error: 'alightingStopId is required.' });
+    }
+
+    const journey = await Journey.findById(req.params.id);
+    if (!journey) return res.status(404).json({ success: false, error: 'Journey not found.' });
+    if (journey.status !== 'active') {
+      return res.status(400).json({ success: false, error: `Journey is already ${journey.status}.` });
+    }
+
+    const { loadRouteStopsWithCoords, lookupFare } = require('../utils/journeyUtils');
+    const PointTransaction = require('../models/PointTransaction');
+
+    const orderedStops = await loadRouteStopsWithCoords(journey.routeId, journey.direction);
+    const alightingIdx = orderedStops.findIndex(s => s.stopId === alightingStopId);
+    if (alightingIdx === -1) {
+      return res.status(400).json({ success: false, error: 'Stop not found in route.' });
+    }
+
+    const alightStop = orderedStops[alightingIdx];
+    const stopsTravelled = Math.max(1, Math.abs(alightingIdx - journey.boardingStopIndex));
+    const fareInfo = await lookupFare(stopsTravelled);
+    const fareCharged = fareInfo.price;
+
+    const updated = await User.findByIdAndUpdate(
+      journey.userId,
+      { $inc: { pointBalance: -fareCharged } },
+      { new: true }
+    );
+    if (!updated) return res.status(404).json({ success: false, error: 'User not found.' });
+
+    await PointTransaction.create({
+      userId: journey.userId,
+      type: 'journey_payment',
+      amount: -fareCharged,
+      balanceAfter: updated.pointBalance,
+      description: `Journey: ${journey.boardingStopName} → ${alightStop.name} (${stopsTravelled} stop${stopsTravelled !== 1 ? 's' : ''}) [Admin completed]`,
+      journeyId: String(journey._id),
+    });
+
+    journey.alightingStopId = alightStop.stopId;
+    journey.alightingStopName = alightStop.name || '';
+    journey.alightingStopIndex = alightingIdx;
+    journey.stopsTravelled = stopsTravelled;
+    journey.fareCharged = fareCharged;
+    journey.fareSectionId = fareInfo.sectionId;
+    journey.fareSectionName = fareInfo.sectionName;
+    journey.status = 'completed';
+    journey.endedAt = new Date();
+    await journey.save();
+
+    res.json({ success: true, fareCharged, stopsTravelled, fareSectionName: fareInfo.sectionName });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

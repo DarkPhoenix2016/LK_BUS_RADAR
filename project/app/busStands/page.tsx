@@ -6,14 +6,17 @@ import { API_ENDPOINTS, BusStandContact, fetcher } from "@/services/transportApi
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Phone, Search, MapPin, ChevronDown, PhoneCall, Copy } from "lucide-react";
+import { Phone, Search, MapPin, ChevronDown, PhoneCall, Copy, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { notify } from "@/lib/notify";
+
+const PER_PAGE = 15;
 
 export default function BusStandsPage() {
   const [selectedDistrict, setSelectedDistrict] = useState<string>("");
   const [search, setSearch] = useState("");
   const [districtOpen, setDistrictOpen] = useState(false);
+  const [page, setPage] = useState(1);
 
   const { data: districtsData } = useSWR(API_ENDPOINTS.BUS_STANDS_DISTRICTS, fetcher);
   const districts: string[] = districtsData?.data || [];
@@ -25,6 +28,10 @@ export default function BusStandsPage() {
 
   const { data: contactsData, isLoading } = useSWR(queryUrl, fetcher);
   const contacts: BusStandContact[] = contactsData?.data || [];
+
+  const totalPages = Math.max(1, Math.ceil(contacts.length / PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+  const pageContacts = contacts.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
 
   const handleCopy = (phone: string) => {
     navigator.clipboard.writeText(phone);
@@ -58,7 +65,7 @@ export default function BusStandsPage() {
           {districtOpen && (
             <div className="absolute top-full mt-1 left-0 z-50 bg-white border border-slate-200 rounded-2xl shadow-xl overflow-hidden min-w-[220px] max-h-72 overflow-y-auto">
               <button
-                onClick={() => { setSelectedDistrict(""); setDistrictOpen(false); }}
+                onClick={() => { setSelectedDistrict(""); setDistrictOpen(false); setPage(1); }}
                 className={cn("w-full text-left px-4 py-2.5 text-sm font-semibold hover:bg-slate-50", !selectedDistrict && "bg-primary/5 text-primary font-bold")}
               >
                 All Districts
@@ -66,7 +73,7 @@ export default function BusStandsPage() {
               {districts.map((d) => (
                 <button
                   key={d}
-                  onClick={() => { setSelectedDistrict(d); setDistrictOpen(false); }}
+                  onClick={() => { setSelectedDistrict(d); setDistrictOpen(false); setPage(1); }}
                   className={cn("w-full text-left px-4 py-2.5 text-sm font-semibold hover:bg-slate-50 border-t border-slate-50", selectedDistrict === d && "bg-primary/5 text-primary font-bold")}
                 >
                   {d}
@@ -81,7 +88,7 @@ export default function BusStandsPage() {
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <Input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             placeholder="Search bus stand name..."
             className="pl-9 h-11 rounded-xl"
           />
@@ -115,15 +122,20 @@ export default function BusStandsPage() {
           <Phone size={36} className="mx-auto text-slate-200 mb-3" />
           <p className="text-slate-400 font-bold">No bus stand contacts found</p>
           {(search || selectedDistrict) && (
-            <Button variant="outline" className="mt-3 rounded-xl" onClick={() => { setSearch(""); setSelectedDistrict(""); }}>
+            <Button variant="outline" className="mt-3 rounded-xl" onClick={() => { setSearch(""); setSelectedDistrict(""); setPage(1); }}>
               Clear filters
             </Button>
           )}
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="text-xs text-slate-400 font-bold uppercase tracking-widest mb-2">{contacts.length} result{contacts.length !== 1 ? "s" : ""}</p>
-          {contacts.map((c) => (
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-xs text-slate-400 font-bold uppercase tracking-widest">
+              {contacts.length} result{contacts.length !== 1 ? "s" : ""}
+              {totalPages > 1 && ` · page ${safePage} of ${totalPages}`}
+            </p>
+          </div>
+          {pageContacts.map((c) => (
             <div key={c._id} className="bg-white border border-slate-200 rounded-2xl p-4 flex items-center gap-4 hover:shadow-md transition-shadow">
               <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
                 <MapPin size={16} className="text-primary" />
@@ -145,6 +157,19 @@ export default function BusStandsPage() {
               </div>
             </div>
           ))}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between pt-2">
+              <p className="text-xs text-slate-400">Page {safePage} of {totalPages}</p>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" className="rounded-xl" disabled={safePage <= 1} onClick={() => setPage(p => p - 1)}>
+                  <ChevronLeft size={14} /> Prev
+                </Button>
+                <Button variant="outline" size="sm" className="rounded-xl" disabled={safePage >= totalPages} onClick={() => setPage(p => p + 1)}>
+                  Next <ChevronRight size={14} />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
