@@ -1,14 +1,22 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import QRCode from "qrcode";
-import {
-  Download, Bus, Route as RouteIcon, Loader2, Search, RefreshCw, QrCode,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
 import { notify } from "@/lib/notify";
+import { cn } from "@/lib/utils";
+import {
+  Bus,
+  ChevronLeft,
+  ChevronRight,
+  Download,
+  Loader2,
+  QrCode,
+  RefreshCw,
+  Route as RouteIcon,
+  Search
+} from "lucide-react";
+import QRCode from "qrcode";
+import { useEffect, useRef, useState } from "react";
 
 type QRTab = "routes" | "buses" | "journey";
 
@@ -208,6 +216,15 @@ export default function QRCodesPage() {
     activeTab === "buses"  ? busesLoading  :
     devicesLoading;
 
+  const filteredItems = activeTab === "routes" ? filteredRoutes : activeTab === "journey" ? filteredDevices : filteredBuses;
+  const PER_PAGE = 20;
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(filteredItems.length / PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+  const paginatedItems = filteredItems.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
+
+  useEffect(() => { setPage(1); }, [activeTab, search]);
+
   return (
     <div className="max-w-5xl mx-auto">
       <div className="mb-8">
@@ -269,7 +286,7 @@ export default function QRCodesPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col" style={{ maxHeight: 560 }}>
+        <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden flex flex-col" style={{ maxHeight: 620 }}>
           <div className="p-3 border-b border-slate-100">
             <div className="relative">
               <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -291,108 +308,122 @@ export default function QRCodesPage() {
               <div className="flex items-center justify-center py-16">
                 <Loader2 className="animate-spin text-primary opacity-30" size={28} />
               </div>
+            ) : filteredItems.length === 0 ? (
+              <p className="text-center text-slate-400 py-12 text-sm">
+                No items found match your search.
+              </p>
             ) : activeTab === "journey" ? (
-              filteredDevices.length === 0 ? (
-                <p className="text-center text-slate-400 py-12 text-sm">
-                  {devices.length === 0 ? "No devices found." : "No devices match your search."}
-                </p>
-              ) : (
-                filteredDevices.map((dev) => {
-                  const deepLink   = `${siteUrl}/scan?d=${dev.id}`;
-                  const label      = dev.busNumber ? `Bus ${dev.busNumber}` : `Device ${dev.id.slice(-8)}`;
-                  const subLabel   = [dev.routeNumber ? `Route ${dev.routeNumber}` : null, dev.isOnline ? "● Online" : "○ Offline"].filter(Boolean).join("  ·  ");
-                  const isSelected = selected?.deepLink === deepLink;
+              paginatedItems.map((item: any) => {
+                const dev = item as DeviceRow;
+                const deepLink   = `${siteUrl}/scan?d=${dev.id}`;
+                const label      = dev.busNumber ? `Bus ${dev.busNumber}` : `Device ${dev.id.slice(-8)}`;
+                const subLabel   = [dev.routeNumber ? `Route ${dev.routeNumber}` : null, dev.isOnline ? "● Online" : "○ Offline"].filter(Boolean).join("  ·  ");
+                const isSelected = selected?.deepLink === deepLink;
 
-                  return (
-                    <button
-                      key={dev.id}
-                      onClick={() => setSelected({ label, subLabel, deepLink })}
-                      className={cn(
-                        "w-full text-left px-4 py-3 border-b border-slate-50 transition-colors flex items-center gap-3",
-                        isSelected ? "bg-emerald-50 border-l-4 border-l-emerald-600" : "hover:bg-slate-50"
-                      )}
-                    >
-                      <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", isSelected ? "bg-emerald-600" : "bg-slate-100")}>
-                        <QrCode size={13} className={isSelected ? "text-white" : "text-slate-400"} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-slate-900">{label}</p>
-                        {subLabel && <p className="text-xs text-slate-400">{subLabel}</p>}
-                      </div>
-                      {isSelected && <QrCode size={14} className="text-emerald-600 ml-auto shrink-0" />}
-                    </button>
-                  );
-                })
-              )
+                return (
+                  <button
+                    key={dev.id}
+                    onClick={() => setSelected({ label, subLabel, deepLink })}
+                    className={cn(
+                      "w-full text-left px-4 py-3 border-b border-slate-50 transition-colors flex items-center gap-3",
+                      isSelected ? "bg-emerald-50 border-l-4 border-l-emerald-600" : "hover:bg-slate-50"
+                    )}
+                  >
+                    <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", isSelected ? "bg-emerald-600" : "bg-slate-100")}>
+                      <QrCode size={13} className={isSelected ? "text-white" : "text-slate-400"} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-900">{label}</p>
+                      {subLabel && <p className="text-xs text-slate-400">{subLabel}</p>}
+                    </div>
+                    {isSelected && <QrCode size={14} className="text-emerald-600 ml-auto shrink-0" />}
+                  </button>
+                );
+              })
             ) : activeTab === "routes" ? (
-              filteredRoutes.length === 0 ? (
-                <p className="text-center text-slate-400 py-12 text-sm">No routes found</p>
-              ) : (
-                filteredRoutes.map((route, index) => {
-                  const routeId = route.id || route._id || `route-${index}`;
-                  const deepLink = `${siteUrl}/?routeId=${routeId}`;
-                  const label = `Route ${route.routeNumber || routeId}`;
-                  const subLabel = route.startStop?.name && route.endStop?.name
-                    ? `${route.startStop.name} → ${route.endStop.name}`
-                    : undefined;
-                  const isSelected = selected?.deepLink === deepLink;
+              paginatedItems.map((item: any, index) => {
+                const route = item as RouteRow;
+                const routeId = route.id || route._id || `route-${index}`;
+                const deepLink = `${siteUrl}/?routeId=${routeId}`;
+                const label = `Route ${route.routeNumber || routeId}`;
+                const subLabel = route.startStop?.name && route.endStop?.name
+                  ? `${route.startStop.name} → ${route.endStop.name}`
+                  : undefined;
+                const isSelected = selected?.deepLink === deepLink;
 
-                  return (
-                    <button
-                      key={routeId}
-                      onClick={() => setSelected({ label, subLabel, deepLink })}
-                      className={cn(
-                        "w-full text-left px-4 py-3 border-b border-slate-50 transition-colors flex items-center gap-3",
-                        isSelected ? "bg-primary/5 border-l-4 border-l-primary" : "hover:bg-slate-50"
-                      )}
-                    >
-                      <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", isSelected ? "bg-primary" : "bg-slate-100")}>
-                        <RouteIcon size={13} className={isSelected ? "text-white" : "text-slate-400"} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-slate-900">{label}</p>
-                        {subLabel && <p className="text-xs text-slate-400 truncate">{subLabel}</p>}
-                      </div>
-                      {isSelected && <QrCode size={14} className="text-primary ml-auto shrink-0" />}
-                    </button>
-                  );
-                })
-              )
+                return (
+                  <button
+                    key={routeId}
+                    onClick={() => setSelected({ label, subLabel, deepLink })}
+                    className={cn(
+                      "w-full text-left px-4 py-3 border-b border-slate-50 transition-colors flex items-center gap-3",
+                      isSelected ? "bg-primary/5 border-l-4 border-l-primary" : "hover:bg-slate-50"
+                    )}
+                  >
+                    <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", isSelected ? "bg-primary" : "bg-slate-100")}>
+                      <RouteIcon size={13} className={isSelected ? "text-white" : "text-slate-400"} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-900">{label}</p>
+                      {subLabel && <p className="text-xs text-slate-400 truncate">{subLabel}</p>}
+                    </div>
+                    {isSelected && <QrCode size={14} className="text-primary ml-auto shrink-0" />}
+                  </button>
+                );
+              })
             ) : (
-              filteredBuses.length === 0 ? (
-                <p className="text-center text-slate-400 py-12 text-sm">
-                  {buses.length === 0 ? "No buses found." : "No buses match your search."}
-                </p>
-              ) : (
-                filteredBuses.map((bus) => {
-                  const deepLink = `${siteUrl}/?busId=${bus.id}`;
-                  const label = bus.busNumber || `Bus ${bus.id}`;
-                  const subLabel = bus.routeNumber ? `Route ${bus.routeNumber}` : undefined;
-                  const isSelected = selected?.deepLink === deepLink;
+              paginatedItems.map((item: any) => {
+                const bus = item as BusRow;
+                const deepLink = `${siteUrl}/?busId=${bus.id}`;
+                const label = bus.busNumber || `Bus ${bus.id}`;
+                const subLabel = bus.routeNumber ? `Route ${bus.routeNumber}` : undefined;
+                const isSelected = selected?.deepLink === deepLink;
 
-                  return (
-                    <button
-                      key={bus.id}
-                      onClick={() => setSelected({ label, subLabel, deepLink })}
-                      className={cn(
-                        "w-full text-left px-4 py-3 border-b border-slate-50 transition-colors flex items-center gap-3",
-                        isSelected ? "bg-primary/5 border-l-4 border-l-primary" : "hover:bg-slate-50"
-                      )}
-                    >
-                      <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", isSelected ? "bg-primary" : "bg-slate-100")}>
-                        <Bus size={13} className={isSelected ? "text-white" : "text-slate-400"} />
-                      </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold text-slate-900">{label}</p>
-                        {subLabel && <p className="text-xs text-slate-400">{subLabel}</p>}
-                      </div>
-                      {isSelected && <QrCode size={14} className="text-primary ml-auto shrink-0" />}
-                    </button>
-                  );
-                })
-              )
+                return (
+                  <button
+                    key={bus.id}
+                    onClick={() => setSelected({ label, subLabel, deepLink })}
+                    className={cn(
+                      "w-full text-left px-4 py-3 border-b border-slate-50 transition-colors flex items-center gap-3",
+                      isSelected ? "bg-primary/5 border-l-4 border-l-primary" : "hover:bg-slate-50"
+                    )}
+                  >
+                    <div className={cn("w-7 h-7 rounded-lg flex items-center justify-center shrink-0", isSelected ? "bg-primary" : "bg-slate-100")}>
+                      <Bus size={13} className={isSelected ? "text-white" : "text-slate-400"} />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold text-slate-900">{label}</p>
+                      {subLabel && <p className="text-xs text-slate-400">{subLabel}</p>}
+                    </div>
+                    {isSelected && <QrCode size={14} className="text-primary ml-auto shrink-0" />}
+                  </button>
+                );
+              })
             )}
           </div>
+
+          {/* Pagination controls */}
+          {!isLoading && totalPages > 1 && (
+            <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                Page {safePage} of {totalPages}
+              </span>
+              <div className="flex gap-1">
+                <Button 
+                  variant="outline" size="icon" className="h-7 w-7 rounded-lg" 
+                  disabled={safePage <= 1} onClick={() => setPage(p => p - 1)}
+                >
+                  <ChevronLeft size={12} />
+                </Button>
+                <Button 
+                  variant="outline" size="icon" className="h-7 w-7 rounded-lg" 
+                  disabled={safePage >= totalPages} onClick={() => setPage(p => p + 1)}
+                >
+                  <ChevronRight size={12} />
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         <div className="bg-white border border-slate-200 rounded-2xl flex items-center justify-center p-8" style={{ minHeight: 400 }}>

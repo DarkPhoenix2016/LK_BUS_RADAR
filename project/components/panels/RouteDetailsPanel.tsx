@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Route as RouteIcon, MapPin, ArrowRightLeft, Bus as BusIcon, Radio, Share2 } from "lucide-react";
+import { X, Route as RouteIcon, MapPin, ArrowRightLeft, Bus as BusIcon, Radio, Share2, Loader2 } from "lucide-react";
 import useSWR from "swr";
 import QRCode from "qrcode";
 import { API_ENDPOINTS, fetcher, RouteWithMeta } from "@/services/transportApi";
@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Loader2 } from "lucide-react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 import { RouteTimetableContent } from "@/components/panels/RouteTimetableContent";
 
 interface RouteDetailsPanelProps {
@@ -29,6 +30,7 @@ export function RouteDetailsPanel({
   onDirectionChange,
   onBusSelect,
 }: RouteDetailsPanelProps) {
+  const isMobile = useIsMobile();
   const { data: route, error, isLoading } = useSWR<RouteWithMeta>(
     routeId ? API_ENDPOINTS.ROUTE_META(routeId) : null,
     fetcher
@@ -36,7 +38,10 @@ export function RouteDetailsPanel({
 
   const [stopDirection, setStopDirection] = useState<"up" | "down">("up");
   const [shareOpen, setShareOpen] = useState(false);
+  const [minimized, setMinimized] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => { setMinimized(false); }, [routeId]);
 
   useEffect(() => {
     if (!shareOpen || !routeId || !canvasRef.current) return;
@@ -64,14 +69,32 @@ export function RouteDetailsPanel({
       {routeId && (
         <motion.div
           key="route-panel"
-          initial={{ x: "100%" }}
-          animate={{ x: 0 }}
-          exit={{ x: "100%" }}
+          initial={isMobile ? { y: "100%", x: 0 } : { x: "100%", y: 0 }}
+          animate={isMobile ? { y: minimized ? "calc(100% - 116px)" : 0, x: 0 } : { x: 0, y: 0 }}
+          exit={isMobile ? { y: "100%", x: 0 } : { x: "100%", y: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 200 }}
-          className="fixed right-0 top-0 bottom-0 w-full sm:w-[450px] bg-white shadow-2xl z-[110] border-l border-slate-200 flex flex-col overflow-hidden"
+          className={cn(
+            "fixed bg-white shadow-2xl z-[45] border-slate-200 flex flex-col overflow-hidden",
+            isMobile
+              ? "bottom-0 left-0 right-0 h-[85vh] rounded-t-[2.5rem] border-t"
+              : "right-0 top-0 bottom-0 w-full sm:w-[450px] border-l"
+          )}
         >
+          {/* Mobile handle indicator */}
+          {isMobile && (
+            <button
+              onClick={() => setMinimized((v) => !v)}
+              className="w-full flex flex-col items-center pt-2.5 pb-1 shrink-0 touch-none"
+            >
+              <div className={cn("w-12 h-1.5 rounded-full transition-colors", minimized ? "bg-primary" : "bg-slate-200")} />
+              {minimized && (
+                <p className="text-[10px] font-black text-primary mt-1 uppercase tracking-widest">Tap to expand</p>
+              )}
+            </button>
+          )}
+
           {/* Fixed header */}
-          <div className="p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0">
+          <div className={cn("p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 shrink-0", isMobile ? "pt-2 pb-4" : "")}>
             <div className="flex items-center gap-3">
               <div className="bg-primary/10 p-2.5 rounded-xl">
                 <RouteIcon className="text-primary" size={24} />
@@ -98,7 +121,7 @@ export function RouteDetailsPanel({
           </div>
 
           {/* Scrollable content */}
-          <ScrollArea className="flex-1 min-h-0">
+          <ScrollArea className="flex-1 min-h-0 pb-16">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-20 gap-4">
                 <Loader2 className="animate-spin text-primary opacity-20" size={40} />

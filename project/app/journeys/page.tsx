@@ -206,14 +206,14 @@ export default function JourneysPage() {
 }
 
 function JourneyCard({ journey, onOpen }: { journey: Journey; onOpen: (id: string) => void }) {
-  const isCompleted = journey.status === "completed";
+  const isClickable = journey.status === "completed" || journey.status === "cancelled";
 
   return (
     <button
-      onClick={() => isCompleted && onOpen(journey._id)}
+      onClick={() => isClickable && onOpen(journey._id)}
       className={cn(
         "w-full bg-white rounded-2xl border border-slate-100 p-4 text-left shadow-sm transition-all",
-        isCompleted ? "hover:shadow-md hover:border-slate-200 cursor-pointer" : "cursor-default"
+        isClickable ? "hover:shadow-md hover:border-slate-200 cursor-pointer" : "cursor-default"
       )}
     >
       {/* Top row */}
@@ -244,14 +244,14 @@ function JourneyCard({ journey, onOpen }: { journey: Journey; onOpen: (id: strin
           <div>
             <p className="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Alighted</p>
             <p className="font-bold text-slate-800 text-sm truncate">
-              {journey.alightingStopName || (isCompleted ? "—" : "Still on bus")}
+              {journey.alightingStopName || (journey.status === "active" ? "Still on bus" : "—")}
             </p>
           </div>
         </div>
       </div>
 
       {/* Stats */}
-      {isCompleted && (
+      {journey.status === "completed" && (
         <div className="flex items-center gap-3 mt-3 pt-3 border-t border-slate-50">
           <div className="flex items-center gap-1.5 text-xs text-slate-500">
             <MapPin size={12} className="text-slate-400" />

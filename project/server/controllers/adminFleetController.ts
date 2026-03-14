@@ -1536,6 +1536,7 @@ router.get('/journeys', async (req, res) => {
         userName:    user?.displayName || null,
         busNumber:   bus?.busNumber    || null,
         routeNumber: route?.routeNumber || null,
+        fareSectionName: j.fareSectionName || null,
       };
     });
 

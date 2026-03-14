@@ -8,7 +8,7 @@ import { format } from "date-fns";
 import {
   Bus, MapPin, QrCode, Shield, ChevronDown, ChevronUp, Loader2,
   Navigation, CheckCircle, AlertTriangle, X, XCircle, Coins, ArrowUpDown,
-  Hash, Route as RouteIcon, Info, Clock,
+  Hash, Route as RouteIcon, Info, Clock, Users, Wallet, Zap, Footprints,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -16,6 +16,18 @@ import { auth } from "@/lib/firebase";
 import { API_ENDPOINTS, Journey, JourneyStop, LiveBusPosition, safeFetch } from "@/services/transportApi";
 
 const JourneyMap = dynamic(() => import("./JourneyMap"), { ssr: false, loading: () => null });
+
+function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLon = (lon2 - lon1) * Math.PI / 180;
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos(lat1 * Math.PI / 180) *
+    Math.cos(lat2 * Math.PI / 180) *
+    Math.sin(dLon / 2) ** 2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
 
 async function getToken(): Promise<string> {
   return (await auth.currentUser?.getIdToken()) || "";
@@ -40,11 +52,14 @@ export default function JourneyPage() {
   const [routeNumber,    setRouteNumber]    = useState<string | null>(null);
   const [routeStartName, setRouteStartName] = useState<string | null>(null);
   const [routeEndName,   setRouteEndName]   = useState<string | null>(null);
-  const [loading,      setLoading]      = useState(true);
-  const [showExitWarn, setShowExitWarn] = useState(false);
-  const [scan,         setScan]         = useState<ScanState>({ phase: "idle" });
-  const [dirOverride,  setDirOverride]  = useState<"up" | "down" | null>(null);
-  const [mobilePanel,  setMobilePanel]  = useState(false);  // right-side drawer on mobile
+  const [loading,          setLoading]          = useState(true);
+  const [showExitWarn,     setShowExitWarn]     = useState(false);
+  const [scan,             setScan]             = useState<ScanState>({ phase: "idle" });
+  const [dirOverride,      setDirOverride]      = useState<"up" | "down" | null>(null);
+  const [mobilePanel,      setMobilePanel]      = useState(false);
+  const [panelMinimized,   setPanelMinimized]   = useState(false);
+  const [busPassengers,    setBusPassengers]    = useState<{ activeJourneys: number; seatingCapacity: number | null; available: number | null } | null>(null);
+  const [pointBalance,     setPointBalance]     = useState<number | null>(null);
 
   const mountedRef = useRef(true);
   const pollRef    = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -64,19 +79,27 @@ export default function JourneyPage() {
     setLoading(true);
     try {
       const token = await getToken();
-      const { data, error } = await safeFetch(API_ENDPOINTS.JOURNEY_ACTIVE, {
+
+      // Try active journey first
+      const { data: activeData } = await safeFetch(API_ENDPOINTS.JOURNEY_ACTIVE, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      console.log("[Journey] Active API Response:", { data, error });
-      
+
       if (!mountedRef.current) return;
-      if (error) {
-        console.error("[Journey] Load error:", error);
-        setLoading(false);
-        return;
+
+      let data = activeData;
+
+      // If active journey doesn't match this page's journeyId, fetch by ID (completed/cancelled)
+      if (!activeData?.journey || activeData.journey._id !== journeyId) {
+        const { data: byIdData } = await safeFetch(API_ENDPOINTS.JOURNEY_BY_ID(journeyId), {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (byIdData?.journey) data = byIdData;
       }
+
+      if (!mountedRef.current) return;
+
       if (!data?.journey) {
-        console.warn("[Journey] No active journey found in response");
         setLoading(false);
         return;
       }
@@ -84,20 +107,33 @@ export default function JourneyPage() {
       setJourney(data.journey);
       setStops(data.stops || []);
       setLive(data.live || null);
-      
-      // Use explicit top-level fields, fall back to denormalized journey fields
+
       const bNum = data.busNumber || data.journey?.busNumber;
       const rNum = data.routeNumber || data.journey?.routeNumber;
       const rsName = data.routeStartName || data.journey?.routeStartName;
       const reName = data.routeEndName || data.journey?.routeEndName;
-      
+
       setBusNumber(bNum || null);
       setRouteNumber(rNum || null);
       setRouteStartName(rsName || null);
       setRouteEndName(reName || null);
-      
+
+      // Fetch bus occupancy (public endpoint, no auth needed)
+      const { data: pData } = await safeFetch(API_ENDPOINTS.BUS_PASSENGERS(data.journey.deviceId));
+      if (mountedRef.current && pData?.data) setBusPassengers(pData.data);
+
+      // Fetch user point balance (for low-balance warning)
+      const { data: pointsData } = await safeFetch(API_ENDPOINTS.USER_POINTS, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (mountedRef.current && pointsData?.data?.balance !== undefined) setPointBalance(pointsData.data.balance);
+
       setLoading(false);
-      startPolling(data.journey.deviceId);
+
+      // Only poll live position for active journeys
+      if (data.journey.status === 'active') {
+        startPolling(data.journey.deviceId);
+      }
     } catch (err) {
       console.error("[Journey] Unexpected error in loadJourney:", err);
       if (mountedRef.current) setLoading(false);
@@ -112,7 +148,14 @@ export default function JourneyPage() {
         const { data } = await safeFetch(API_ENDPOINTS.JOURNEY_LIVE(deviceId));
         if (mountedRef.current && data?.data) setLive(data.data);
       } catch { /* ignore */ }
-    }, 10_000);
+      try {
+        const token = await getToken();
+        const { data: pointsData } = await safeFetch(API_ENDPOINTS.USER_POINTS, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (mountedRef.current && pointsData?.data?.balance !== undefined) setPointBalance(pointsData.data.balance);
+      } catch { /* ignore */ }
+    }, 30_000);
   }
 
   // ── prevent navigation away ──────────────────────────────────────────────────
@@ -221,7 +264,14 @@ export default function JourneyPage() {
     if (error) { setScan({ phase: "error", message: error }); return; }
 
     setScan({ phase: "success", to: data.to, fare: data.fareCharged, stops: data.stopsTravelled, balance: data.newBalance });
-    setJourney((j) => j ? { ...j, status: "completed" } : j);
+    setJourney((j) => j ? {
+      ...j,
+      status: "completed",
+      fareCharged: data.fareCharged,
+      stopsTravelled: data.stopsTravelled,
+      alightingStopName: data.to,
+      endedAt: new Date().toISOString(),
+    } : j);
   }, [journey, stopScanner]);
 
   // ─────────────────────────────────────────────────────────────────────────────
@@ -245,21 +295,304 @@ export default function JourneyPage() {
   }
 
   if (journey.status === "completed") {
+    const durationMs = journey.startedAt && journey.endedAt
+      ? new Date(journey.endedAt).getTime() - new Date(journey.startedAt).getTime()
+      : null;
+    const durationMin = durationMs ? Math.round(durationMs / 60000) : null;
+    const boardingIdx2  = journey.boardingStopIndex;
+    const alightingIdx2 = journey.alightingStopIndex ?? stops.length - 1;
+
+    // Distance between traveled stops
+    let distanceKm = 0;
+    const takenStops = stops.slice(
+      Math.min(boardingIdx2, alightingIdx2),
+      Math.max(boardingIdx2, alightingIdx2) + 1
+    );
+    for (let i = 0; i < takenStops.length - 1; i++) {
+      const s1 = takenStops[i];
+      const s2 = takenStops[i + 1];
+      distanceKm += haversineKm(
+        parseFloat(s1.latitude), parseFloat(s1.longitude),
+        parseFloat(s2.latitude), parseFloat(s2.longitude)
+      );
+    }
+
+    const avgSpeed = distanceKm > 0 && durationMin && durationMin > 0
+      ? distanceKm / (durationMin / 60)
+      : 0;
+
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center gap-6 px-6 text-center">
-        <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 18 }}
-          className="w-24 h-24 rounded-full bg-primary/10 flex items-center justify-center">
-          <CheckCircle size={52} className="text-primary" />
-        </motion.div>
-        <div>
-          <h2 className="text-2xl font-black text-primary">Journey Complete</h2>
-          <p className="text-slate-500 mt-1 text-sm">{journey.boardingStopName} → {journey.alightingStopName}</p>
+      <div className="relative w-full h-screen overflow-hidden bg-slate-100 flex flex-col md:flex-row">
+
+        {/* ── Desktop: left summary panel ──────────────────────────────────── */}
+        <div className="hidden md:flex md:w-[400px] bg-white border-r border-slate-200 flex-col h-screen shrink-0 shadow-xl z-10">
+
+          {/* Scrollable body */}
+          <div className="flex-1 overflow-y-auto">
+
+            {/* Back nav */}
+            <div className="px-6 pt-5">
+              <button
+                onClick={() => router.replace("/journeys")}
+                className="flex items-center gap-1.5 text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                <ChevronDown size={13} className="rotate-90" /> Journey History
+              </button>
+            </div>
+
+            {/* Celebration header */}
+            <div className="px-6 pt-4 pb-5 border-b border-slate-100">
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ type: "spring", stiffness: 280, damping: 22 }}
+                className="flex items-center gap-4 mb-4"
+              >
+                <div className="w-14 h-14 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0 shadow-sm">
+                  <CheckCircle size={30} className="text-emerald-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-black text-slate-900 leading-tight">Journey Complete!</h2>
+                  {journey.endedAt && (
+                    <p className="text-[11px] font-medium text-slate-400 mt-0.5">
+                      {format(new Date(journey.endedAt), "EEEE, MMM d · h:mm a")}
+                    </p>
+                  )}
+                </div>
+              </motion.div>
+
+              {/* Route / bus chips */}
+              <div className="flex gap-2 flex-wrap">
+                {routeNumber && (
+                  <span className="flex items-center gap-1 bg-primary text-white rounded-lg px-3 py-1 text-xs font-black">
+                    <RouteIcon size={10} /> Route {routeNumber}
+                  </span>
+                )}
+                {busNumber && (
+                  <span className="flex items-center gap-1 bg-slate-100 rounded-lg px-3 py-1 text-xs font-bold text-slate-600">
+                    <Hash size={10} /> {busNumber}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Journey timeline */}
+            <div className="px-6 py-5 border-b border-slate-100">
+              <div className="flex gap-3">
+                <div className="flex flex-col items-center shrink-0 pt-0.5">
+                  <div className="w-3 h-3 rounded-full bg-emerald-500 shadow-sm" />
+                  <div className="w-px flex-1 bg-slate-200 my-1.5" style={{ minHeight: 40 }} />
+                  <div className="w-3 h-3 rounded-full bg-primary shadow-sm" />
+                </div>
+                <div className="flex-1 space-y-5">
+                  <div>
+                    <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-0.5">Boarded</p>
+                    <p className="text-sm font-black text-slate-900 leading-tight">{journey.boardingStopName}</p>
+                    <p className="text-xs text-slate-400 font-medium mt-0.5">
+                      {journey.startedAt ? format(new Date(journey.startedAt), "h:mm a") : ""}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[9px] font-black text-primary uppercase tracking-widest mb-0.5">Alighted</p>
+                    <p className="text-sm font-black text-slate-900 leading-tight">{journey.alightingStopName || "Terminal"}</p>
+                    <p className="text-xs text-slate-400 font-medium mt-0.5">
+                      {journey.endedAt ? format(new Date(journey.endedAt), "h:mm a") : ""}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Stats grid */}
+            <div className="px-6 py-5 border-b border-slate-100">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Trip Statistics</p>
+              <div className="grid grid-cols-2 gap-3">
+                <SummaryStatCard icon={MapPin}      label="Distance"  value={distanceKm.toFixed(2)} unit="km"   accent="blue" />
+                <SummaryStatCard icon={Clock}       label="Duration"  value={durationMin ? String(durationMin) : "—"} unit="min" accent="violet" />
+                <SummaryStatCard icon={Zap}         label="Avg Speed" value={String(Math.round(avgSpeed))} unit="km/h" accent="amber" />
+                <SummaryStatCard icon={Footprints}  label="Stops"     value={String(journey.stopsTravelled ?? "—")} unit="stops" accent="emerald" />
+              </div>
+            </div>
+
+            {/* Points / fare card */}
+            <div className="px-6 py-5 border-b border-slate-100">
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+                className="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-5 text-white shadow-xl shadow-emerald-500/25"
+              >
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-[10px] font-black uppercase tracking-widest opacity-80 mb-1">Points Spent</p>
+                    <div className="flex items-end gap-1.5">
+                      <p className="text-4xl font-black leading-none">{journey.fareCharged ?? 0}</p>
+                      <p className="text-emerald-200 text-sm font-bold mb-1">pts</p>
+                    </div>
+                    {journey.fareSectionName && (
+                      <p className="text-emerald-100 text-[10px] font-bold mt-2 uppercase tracking-wider opacity-90">
+                        {journey.fareSectionName}
+                      </p>
+                    )}
+                  </div>
+                  <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                    <Coins size={22} className="opacity-90" />
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+
+            {/* Route stops tree */}
+            <div className="px-6 py-5">
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-3">Route Stops</p>
+              <StopsTree stops={stops} boardingIdx={boardingIdx2} currentIdx={alightingIdx2} />
+            </div>
+          </div>
+
+          {/* CTA buttons */}
+          <div className="px-6 py-5 border-t border-slate-100 bg-white shrink-0 space-y-2">
+            <Button
+              className="w-full h-12 rounded-2xl font-black text-sm shadow-xl shadow-primary/10"
+              onClick={() => router.replace("/")}
+            >
+              Back to Map
+            </Button>
+            <button
+              onClick={() => router.replace("/journeys")}
+              className="w-full h-10 text-sm font-bold text-slate-500 hover:text-slate-700 transition-colors"
+            >
+              View Journey History
+            </button>
+          </div>
         </div>
-        <div className="bg-white border border-slate-200 rounded-2xl p-5 w-full max-w-xs space-y-3 text-sm shadow-sm">
-          <div className="flex justify-between"><span className="text-slate-500">Stops</span><span className="font-bold text-slate-900">{journey.stopsTravelled}</span></div>
-          <div className="flex justify-between"><span className="text-slate-500">Fare</span><span className="font-black text-emerald-600 text-base">{journey.fareCharged} pts</span></div>
+
+        {/* ── Map (full screen background) ─────────────────────────────────── */}
+        <div className="flex-1 relative h-full">
+          <JourneyMap
+            stops={stops}
+            live={null}
+            boardingStopIndex={boardingIdx2}
+            currentBusStopIndex={alightingIdx2}
+            isCompleted={true}
+          />
+
+          {/* ── Mobile: bottom summary sheet ─────────────────────────────── */}
+          <motion.div
+            className="md:hidden fixed bottom-0 left-0 right-0 z-20 bg-white rounded-t-[2.5rem] border-t border-slate-200 shadow-2xl"
+            initial={{ y: "100%" }}
+            animate={{ y: 0 }}
+            transition={{ type: "spring", damping: 28, stiffness: 220, delay: 0.1 }}
+          >
+            {/* Handle */}
+            <div className="flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1.5 rounded-full bg-slate-200" />
+            </div>
+
+            <div className="px-5 pb-10 pt-2 space-y-4">
+              {/* Header row */}
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-emerald-100 flex items-center justify-center shrink-0">
+                  <CheckCircle size={20} className="text-emerald-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-black text-slate-900 text-base leading-tight">Journey Summary</h3>
+                  <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter">Completed</p>
+                </div>
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 text-center shrink-0">
+                  <p className="text-xl font-black text-emerald-600">{journey.fareCharged ?? 0}</p>
+                  <p className="text-[9px] font-black text-emerald-400 uppercase tracking-wider">pts</p>
+                </div>
+              </div>
+
+              {/* Stats row */}
+              <div className="grid grid-cols-4 gap-2">
+                <MobileStatPill label="km"    value={distanceKm.toFixed(1)} />
+                <MobileStatPill label="min"   value={durationMin != null ? String(durationMin) : "—"} />
+                <MobileStatPill label="km/h"  value={String(Math.round(avgSpeed))} />
+                <MobileStatPill label="stops" value={String(journey.stopsTravelled ?? "—")} />
+              </div>
+
+              {/* Journey stops line */}
+              <div className="flex gap-3">
+                <div className="flex flex-col items-center shrink-0 pt-1">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500" />
+                  <div className="w-px flex-1 bg-slate-200 my-1" style={{ minHeight: 24 }} />
+                  <div className="w-2.5 h-2.5 rounded-full bg-primary" />
+                </div>
+                <div className="flex-1 min-w-0 space-y-3">
+                  <div>
+                    <p className="text-xs font-bold text-slate-700 truncate">{journey.boardingStopName}</p>
+                    <p className="text-[10px] text-slate-400 font-medium">
+                      {journey.startedAt ? format(new Date(journey.startedAt), "h:mm a") : ""}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs font-black text-slate-900 truncate">{journey.alightingStopName || "End Terminal"}</p>
+                    <p className="text-[10px] text-slate-400 font-medium">
+                      {journey.endedAt ? format(new Date(journey.endedAt), "h:mm a") : ""}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* CTA */}
+              <Button
+                className="w-full h-12 rounded-2xl font-black shadow-lg shadow-primary/20"
+                onClick={() => router.replace("/")}
+              >
+                Back to Map
+              </Button>
+              <button
+                onClick={() => router.replace("/journeys")}
+                className="w-full h-9 text-sm font-bold text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                View History
+              </button>
+            </div>
+          </motion.div>
         </div>
-        <Button className="h-12 px-8 rounded-2xl font-bold" onClick={() => router.replace("/")}>Back to Map</Button>
+      </div>
+    );
+  }
+
+  function SummaryStatCard({
+    icon: Icon,
+    label,
+    value,
+    unit,
+    accent,
+  }: {
+    icon: any;
+    label: string;
+    value: string;
+    unit: string;
+    accent: "blue" | "violet" | "amber" | "emerald";
+  }) {
+    const colorMap = {
+      blue:    "bg-blue-50   border-blue-100   text-blue-600",
+      violet:  "bg-violet-50 border-violet-100 text-violet-600",
+      amber:   "bg-amber-50  border-amber-100  text-amber-600",
+      emerald: "bg-emerald-50 border-emerald-100 text-emerald-600",
+    };
+    return (
+      <div className={`border rounded-2xl p-4 ${colorMap[accent]}`}>
+        <div className="flex items-center gap-1.5 mb-2">
+          <Icon size={11} className="opacity-70" />
+          <p className="text-[9px] font-black uppercase tracking-widest opacity-70">{label}</p>
+        </div>
+        <div className="flex items-end gap-1">
+          <p className="text-2xl font-black leading-none">{value}</p>
+          <p className="text-xs font-bold opacity-60 mb-0.5">{unit}</p>
+        </div>
+      </div>
+    );
+  }
+
+  function MobileStatPill({ label, value }: { label: string; value: string }) {
+    return (
+      <div className="bg-slate-50 border border-slate-100 rounded-xl p-2.5 text-center">
+        <p className="text-base font-black text-slate-900">{value}</p>
+        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{label}</p>
       </div>
     );
   }
@@ -293,6 +626,7 @@ export default function JourneyPage() {
           currentBusStopIdx={currentBusStopIdx}
           stopsAhead={stopsAhead}
           displayDir={displayDir}
+          busPassengers={busPassengers}
           onDirOverride={setDirOverride}
           onScan={openScanner}
         />
@@ -358,6 +692,27 @@ export default function JourneyPage() {
             </div>
           </motion.div>
 
+          {/* Low-balance warning */}
+          {pointBalance !== null && pointBalance <= 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-red-500/95 backdrop-blur-xl text-white rounded-2xl px-4 py-3 shadow-lg flex items-center gap-3"
+            >
+              <Wallet size={16} className="shrink-0" />
+              <div className="flex-1 min-w-0">
+                <p className="font-black text-sm">Insufficient Balance</p>
+                <p className="text-xs opacity-90">Please top up your wallet to continue.</p>
+              </div>
+              <button
+                onClick={() => router.push("/wallet")}
+                className="text-xs font-black bg-white/20 hover:bg-white/30 rounded-lg px-2.5 py-1 shrink-0 transition-colors"
+              >
+                Top Up
+              </button>
+            </motion.div>
+          )}
+
           {/* Action buttons — top-right, below the info bar, mobile only */}
           <motion.div
             initial={{ opacity: 0, y: -10 }}
@@ -366,7 +721,7 @@ export default function JourneyPage() {
             className="md:hidden flex items-center justify-end gap-2"
           >
             <button
-              onClick={() => setMobilePanel(true)}
+              onClick={() => { setPanelMinimized(false); setMobilePanel(true); }}
               className="h-10 px-3.5 rounded-xl bg-white/95 border border-slate-200 shadow-lg flex items-center gap-2 text-xs font-bold text-slate-600 backdrop-blur-xl"
             >
               <Info size={15} />
@@ -383,52 +738,81 @@ export default function JourneyPage() {
         </div>
       </div>
 
-      {/* ── Mobile: right-side drawer panel ─────────────────────────────────── */}
+      {/* ── Mobile: bottom sheet panel ───────────────────────────────────────── */}
       <AnimatePresence>
         {mobilePanel && (
           <>
+            {/* Backdrop — only visible when expanded */}
             <motion.div
               key="mob-backdrop"
               initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              animate={{ opacity: panelMinimized ? 0 : 1 }}
               exit={{ opacity: 0 }}
-              className="md:hidden fixed inset-0 z-30 bg-black/30"
-              onClick={() => setMobilePanel(false)}
+              className="md:hidden fixed inset-0 z-30 bg-black/30 pointer-events-none"
+              style={{ pointerEvents: panelMinimized ? "none" : "auto" }}
+              onClick={() => { if (!panelMinimized) setMobilePanel(false); }}
             />
             <motion.div
-              key="mob-drawer"
-              initial={{ x: "100%" }}
-              animate={{ x: 0 }}
-              exit={{ x: "100%" }}
+              key="mobile-panel"
+              initial={{ y: "100%" }}
+              animate={{ y: panelMinimized ? "calc(100% - 52px)" : 0 }}
+              exit={{ y: "100%" }}
               transition={{ type: "spring", damping: 28, stiffness: 300 }}
-              className="md:hidden fixed inset-y-0 right-0 z-40 w-80 bg-white shadow-2xl flex flex-col"
+              className="md:hidden fixed bottom-0 left-0 right-0 z-40 h-[80vh] bg-white shadow-2xl flex flex-col rounded-t-[2.5rem] border-t border-slate-200"
             >
-              <div className="flex items-center justify-between px-5 pt-5 pb-3 border-b border-slate-100">
-                <p className="font-black text-slate-900 text-base">Journey Details</p>
-                <button
-                  onClick={() => setMobilePanel(false)}
-                  className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200"
-                >
-                  <X size={15} className="text-slate-600" />
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                <SidePanelContent
-                  journey={journey}
-                  stops={stops}
-                  busNumber={busNumber}
-                  routeNumber={routeNumber}
-                  routeStartName={routeStartName}
-                  routeEndName={routeEndName}
-                  live={live}
-                  boardingIdx={boardingIdx}
-                  currentBusStopIdx={currentBusStopIdx}
-                  stopsAhead={stopsAhead}
-                  displayDir={displayDir}
-                  onDirOverride={setDirOverride}
-                  onScan={() => { setMobilePanel(false); openScanner(); }}
-                />
-              </div>
+              {/* Notch — tap to toggle minimize/expand */}
+              <button
+                onClick={() => setPanelMinimized((v) => !v)}
+                className="w-full flex flex-col items-center pt-2.5 pb-1 shrink-0 touch-none"
+              >
+                <div className={cn(
+                  "w-12 h-1.5 rounded-full transition-colors",
+                  panelMinimized ? "bg-primary" : "bg-slate-200"
+                )} />
+                {panelMinimized && (
+                  <p className="text-[10px] font-black text-primary mt-1 uppercase tracking-widest">Tap to expand</p>
+                )}
+              </button>
+
+              <AnimatePresence>
+                {!panelMinimized && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.15 }}
+                    className="flex flex-col flex-1 min-h-0"
+                  >
+                    <div className="flex items-center justify-between px-5 pt-1 pb-3 border-b border-slate-100 shrink-0">
+                      <p className="font-black text-slate-900 text-base">Journey Details</p>
+                      <button
+                        onClick={() => setMobilePanel(false)}
+                        className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center hover:bg-slate-200"
+                      >
+                        <X size={15} className="text-slate-600" />
+                      </button>
+                    </div>
+                    <div className="flex-1 overflow-y-auto">
+                      <SidePanelContent
+                        journey={journey}
+                        stops={stops}
+                        busNumber={busNumber}
+                        routeNumber={routeNumber}
+                        routeStartName={routeStartName}
+                        routeEndName={routeEndName}
+                        live={live}
+                        boardingIdx={boardingIdx}
+                        currentBusStopIdx={currentBusStopIdx}
+                        stopsAhead={stopsAhead}
+                        displayDir={displayDir}
+                        busPassengers={busPassengers}
+                        onDirOverride={setDirOverride}
+                        onScan={() => { setMobilePanel(false); openScanner(); }}
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           </>
         )}
@@ -573,7 +957,7 @@ export default function JourneyPage() {
 /* ── Shared side panel content ───────────────────────────────────────────────── */
 function SidePanelContent({
   journey, stops, busNumber, routeNumber, routeStartName, routeEndName, live,
-  boardingIdx, currentBusStopIdx, stopsAhead, displayDir,
+  boardingIdx, currentBusStopIdx, stopsAhead, displayDir, busPassengers,
   onDirOverride, onScan,
 }: {
   journey: Journey;
@@ -587,6 +971,7 @@ function SidePanelContent({
   currentBusStopIdx: number;
   stopsAhead: number;
   displayDir: string;
+  busPassengers: { activeJourneys: number; seatingCapacity: number | null; available: number | null } | null;
   onDirOverride: (d: "up" | "down") => void;
   onScan: () => void;
 }) {
@@ -646,6 +1031,38 @@ function SidePanelContent({
             <p className="text-xs text-slate-500 mt-0.5">km/h</p>
           </div>
         </div>
+
+        {/* Bus occupancy */}
+        {busPassengers != null && (
+          <div className="mt-2 bg-slate-50 border border-slate-200 rounded-xl p-3">
+            <div className="flex items-center gap-1.5 mb-2">
+              <Users size={11} className="text-slate-400" />
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Bus Occupancy</p>
+            </div>
+            <div className="grid grid-cols-3 gap-1 text-center">
+              <div>
+                <p className="text-lg font-black text-primary">{busPassengers.activeJourneys}</p>
+                <p className="text-[9px] text-slate-400 font-bold">On board</p>
+              </div>
+              <div className="border-x border-slate-200">
+                <p className="text-lg font-black text-emerald-600">{busPassengers.available ?? "—"}</p>
+                <p className="text-[9px] text-slate-400 font-bold">Available</p>
+              </div>
+              <div>
+                <p className="text-lg font-black text-slate-700">{busPassengers.seatingCapacity ?? "—"}</p>
+                <p className="text-[9px] text-slate-400 font-bold">Capacity</p>
+              </div>
+            </div>
+            {busPassengers.seatingCapacity != null && (
+              <div className="mt-2 w-full bg-slate-200 rounded-full h-1 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-primary transition-all"
+                  style={{ width: `${Math.min(100, (busPassengers.activeJourneys / busPassengers.seatingCapacity) * 100)}%` }}
+                />
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Direction toggle */}

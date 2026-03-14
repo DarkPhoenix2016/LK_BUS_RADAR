@@ -22,6 +22,8 @@ const JourneySchema = new mongoose.Schema(
 
     stopsTravelled:     { type: Number, default: null },
     fareCharged:        { type: Number, default: null },
+    fareSectionId:      { type: String, default: null },
+    fareSectionName:    { type: String, default: null },
 
     status: {
       type: String,

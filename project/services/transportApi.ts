@@ -194,6 +194,7 @@ export interface Journey {
   alightingStopIndex: number | null;
   stopsTravelled: number | null;
   fareCharged: number | null;
+  fareSectionName?: string | null;
   status: 'active' | 'completed' | 'cancelled';
   startedAt: string;
   endedAt: string | null;
@@ -260,10 +261,14 @@ export const API_ENDPOINTS = {
   BUS_STOPS_SEARCH: (q: string) => getUrl(`/public/bus-stops/search?q=${encodeURIComponent(q)}`),
   ROUTES_BY_STOPS: (params: string) => getUrl(`/public/routes-by-stops?${params}`),
   JOURNEY_ACTIVE:  getUrl('/journey/active'),
+  JOURNEY_BY_ID:   (id: string) => getUrl(`/journey/${id}`),
   JOURNEY_BOARD:   getUrl('/journey/board'),
   JOURNEY_ALIGHT:  getUrl('/journey/alight'),
   JOURNEY_HISTORY: getUrl('/journey/history'),
   JOURNEY_LIVE:    (deviceId: string) => getUrl(`/public/live-vehicle/${deviceId}`),
+  BUS_PASSENGERS:  (deviceId: string) => getUrl(`/public/bus-passengers/${deviceId}`),
+  SLOT_AVAILABILITY: (routeId: string, travelDate: string) =>
+    getUrl(`/public/slot-availability?routeId=${encodeURIComponent(routeId)}&travelDate=${encodeURIComponent(travelDate)}`),
 };
 
 export const fetcher = (url: string) =>

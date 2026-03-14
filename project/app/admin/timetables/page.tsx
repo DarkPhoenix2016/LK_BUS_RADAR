@@ -1,23 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  Loader2,
-  Clock,
-  Plus,
-  Search,
-  Trash2,
-  Bus,
-  ArrowUp,
-  ArrowDown,
-  ArrowRight,
-  CalendarDays,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -25,6 +8,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
   SelectContent,
@@ -32,9 +18,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fetchAdminConfigMap, formatConfigValue } from "@/lib/admin-configs";
 import { notify } from "@/lib/notify";
+import {
+  ArrowDown,
+  ArrowRight,
+  ArrowUp,
+  Bus,
+  CalendarDays,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Loader2,
+  Plus,
+  Search,
+  Trash2,
+} from "lucide-react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:4000";
 
@@ -297,6 +298,14 @@ export default function TimetablesPage() {
     );
   }, [routes, routeSearch]);
 
+  const [routePage, setRoutePage] = useState(1);
+  const ROUTES_PER_PAGE = 15;
+  const totalRoutePages = Math.max(1, Math.ceil(filteredRoutes.length / ROUTES_PER_PAGE));
+  const safeRoutePage = Math.min(routePage, totalRoutePages);
+  const paginatedRoutes = filteredRoutes.slice((safeRoutePage - 1) * ROUTES_PER_PAGE, safeRoutePage * ROUTES_PER_PAGE);
+
+  useEffect(() => { setRoutePage(1); }, [routeSearch]);
+
   const directionSlots = useMemo(
     () => slots.filter((s) => String(s.direction).toUpperCase() === activeDirection),
     [slots, activeDirection]
@@ -485,7 +494,7 @@ export default function TimetablesPage() {
                 />
               </div>
             </div>
-            <div className="overflow-y-auto max-h-[68vh]">
+            <div className="overflow-y-auto max-h-[60vh]">
               {routesLoading ? (
                 <div className="flex justify-center py-8">
                   <Loader2 size={20} className="animate-spin text-slate-300" />
@@ -493,7 +502,7 @@ export default function TimetablesPage() {
               ) : filteredRoutes.length === 0 ? (
                 <p className="text-center text-slate-400 text-sm py-8">No routes found</p>
               ) : (
-                filteredRoutes.map((r) => (
+                paginatedRoutes.map((r) => (
                   <button
                     key={r.id}
                     onClick={() => setSelectedRoute(r)}
@@ -511,6 +520,23 @@ export default function TimetablesPage() {
                 ))
               )}
             </div>
+
+            {/* Route Pagination */}
+            {!routesLoading && totalRoutePages > 1 && (
+              <div className="p-3 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  Page {safeRoutePage} / {totalRoutePages}
+                </span>
+                <div className="flex gap-1">
+                  <Button variant="outline" size="icon" className="h-7 w-7 rounded-lg" disabled={safeRoutePage <= 1} onClick={() => setRoutePage(p => p - 1)}>
+                    <ChevronLeft size={12} />
+                  </Button>
+                  <Button variant="outline" size="icon" className="h-7 w-7 rounded-lg" disabled={safeRoutePage >= totalRoutePages} onClick={() => setRoutePage(p => p + 1)}>
+                    <ChevronRight size={12} />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 

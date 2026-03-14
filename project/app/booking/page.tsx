@@ -91,8 +91,24 @@ function BookingPageInner() {
     fetcher
   );
 
+  const { data: availabilityData } = useSWR(
+    selectedRouteId && step >= 3 ? API_ENDPOINTS.SLOT_AVAILABILITY(selectedRouteId, selectedDate.toISOString()) : null,
+    fetcher,
+    { refreshInterval: 60000 }
+  );
+  const availabilityMap = new Map<string, { bookedCount: number; maxBookableSeats: number; isFull: boolean }>(
+    (availabilityData?.data || []).map((a: any) => [a.slotId, a])
+  );
+
   const isToday = format(selectedDate, "yyyy-MM-dd") === format(new Date(), "yyyy-MM-dd");
   const nowMinutes = new Date().getHours() * 60 + new Date().getMinutes();
+
+  // Deselect slot if it became full or departed
+  useEffect(() => {
+    if (!selectedSlotId || !availabilityMap.size) return;
+    const avail = availabilityMap.get(String(selectedSlotId));
+    if (avail?.isFull) setSelectedSlotId(null);
+  }, [availabilityData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const filteredSlots = (timetableEntries || [])
     .filter((e) => e.runningSlot.runningDirection === direction)
@@ -389,27 +405,36 @@ function BookingPageInner() {
                 const isSelected = selectedSlotId === entry.runningSlotId;
                 const slotMinutes = time ? parseInt(time.slice(0, 2)) * 60 + parseInt(time.slice(2)) : null;
                 const isPast = isToday && slotMinutes !== null && slotMinutes < nowMinutes;
+                const avail = availabilityMap.get(String(entry.runningSlotId));
+                const isFull = avail?.isFull ?? false;
+                const isDisabled = isPast || isFull;
 
                 return (
                   <button
                     key={entry.id}
-                    onClick={() => !isPast && setSelectedSlotId(entry.runningSlotId)}
-                    disabled={isPast}
+                    onClick={() => !isDisabled && setSelectedSlotId(entry.runningSlotId)}
+                    disabled={isDisabled}
                     className={cn(
                       "border rounded-2xl p-4 text-left transition-all",
-                      isPast
+                      isDisabled
                         ? "border-slate-100 bg-slate-50 opacity-50 cursor-not-allowed"
                         : isSelected
                         ? "border-primary bg-primary/5 shadow-md shadow-primary/10"
                         : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
                     )}
                   >
-                    <p className={cn("text-2xl font-black font-mono", isPast ? "text-slate-400 line-through" : isSelected ? "text-primary" : "text-slate-900")}>{displayTime}</p>
+                    <p className={cn("text-2xl font-black font-mono", isDisabled ? "text-slate-400 line-through" : isSelected ? "text-primary" : "text-slate-900")}>{displayTime}</p>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">
                       {entry.runningSlot?.runningNumber?.runningNumber || "Run"}
                     </p>
                     {isPast && <p className="text-[9px] text-slate-400 font-bold mt-1">DEPARTED</p>}
-                    {!isPast && entry.isOnline && <div className="w-2 h-2 rounded-full bg-emerald-400 mt-2" />}
+                    {isFull && !isPast && <p className="text-[9px] text-red-400 font-bold mt-1">FULL</p>}
+                    {!isDisabled && avail && (
+                      <p className="text-[9px] text-slate-400 font-bold mt-1">
+                        {avail.maxBookableSeats - avail.bookedCount} left
+                      </p>
+                    )}
+                    {!isDisabled && entry.isOnline && <div className="w-2 h-2 rounded-full bg-emerald-400 mt-2" />}
                   </button>
                 );
               })}

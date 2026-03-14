@@ -2,15 +2,19 @@
 
 import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Bus as BusIcon, Route as RouteIcon, MapPin, ChevronRight, Clock, Ticket, Share2 } from "lucide-react";
+import { X, Bus as BusIcon, Route as RouteIcon, MapPin, ChevronRight, Clock, Ticket, Share2, Users } from "lucide-react";
 import { useRouter } from "next/navigation";
 import QRCode from "qrcode";
+import useSWR from "swr";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 import { EnrichedDevice } from "@/data/transportBuilder";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { TimetableInnerPanel } from "@/components/panels/TimetableInnerPanel";
+import { API_ENDPOINTS, fetcher } from "@/services/transportApi";
 
 interface BusDetailsPanelProps {
   device: EnrichedDevice | null;
@@ -20,12 +24,24 @@ interface BusDetailsPanelProps {
 
 export function BusDetailsPanel({ device, onClose, onViewRoute }: BusDetailsPanelProps) {
   const router = useRouter();
+  const isMobile = useIsMobile();
   const [showTimetable, setShowTimetable] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [minimized, setMinimized] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
-  // Reset inner panel when selected bus changes
-  useEffect(() => { setShowTimetable(false); }, [device?.id]);
+  // Reset inner panel + minimized state when selected bus changes
+  useEffect(() => { setShowTimetable(false); setMinimized(false); }, [device?.id]);
+
+  const { data: passengersData } = useSWR(
+    device?.id ? API_ENDPOINTS.BUS_PASSENGERS(device.id) : null,
+    fetcher,
+    { refreshInterval: 10000 }
+  );
+  const passengers: { activeJourneys: number; bookedSeats: number; seatingCapacity: number | null; available: number | null } | null =
+    passengersData?.data ?? null;
+  // Fall back to device-level capacity if API hasn't loaded yet
+  const capacity = passengers?.seatingCapacity ?? device?.seatingCapacity ?? null;
 
   // Render QR code when share dialog opens
   useEffect(() => {
@@ -58,14 +74,38 @@ export function BusDetailsPanel({ device, onClose, onViewRoute }: BusDetailsPane
     <AnimatePresence>
       <motion.div
         key="bus-details-panel"
-        initial={{ x: "100%" }}
-        animate={{ x: 0 }}
-        exit={{ x: "100%" }}
+        initial={isMobile ? { y: "100%", x: 0 } : { x: "100%", y: 0 }}
+        animate={isMobile
+          ? { y: minimized ? "calc(100% - 116px)" : 0, x: 0 }
+          : { x: 0, y: 0 }
+        }
+        exit={isMobile ? { y: "100%", x: 0 } : { x: "100%", y: 0 }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
-        className="fixed right-0 top-0 bottom-0 w-full sm:w-96 bg-white shadow-2xl z-[100] border-l border-slate-200 flex flex-col overflow-hidden"
+        className={cn(
+          "fixed bg-white shadow-2xl z-[45] border-slate-200 flex flex-col overflow-hidden",
+          isMobile
+            ? "bottom-0 left-0 right-0 h-[85vh] rounded-t-[2.5rem] border-t"
+            : "right-0 top-0 bottom-0 w-full sm:w-96 border-l"
+        )}
       >
+        {/* Mobile handle — tap to minimize/expand */}
+        {isMobile && (
+          <button
+            onClick={() => setMinimized((v) => !v)}
+            className="w-full flex flex-col items-center pt-2.5 pb-1 shrink-0 touch-none"
+          >
+            <div className={cn(
+              "w-12 h-1.5 rounded-full transition-colors",
+              minimized ? "bg-primary" : "bg-slate-200"
+            )} />
+            {minimized && (
+              <p className="text-[10px] font-black text-primary mt-1 uppercase tracking-widest">Tap to expand</p>
+            )}
+          </button>
+        )}
+
         {/* Fixed Header */}
-        <div className="p-6 pb-4 shrink-0 flex justify-between items-start">
+        <div className={cn("p-6 shrink-0 flex justify-between items-start", isMobile ? "pb-2 pt-2" : "pb-4")}>
           <div className="flex gap-4 items-center">
             <div className={device.isOnline ? "bg-emerald-500/10 p-3 rounded-2xl" : "bg-slate-100 p-3 rounded-2xl"}>
               <BusIcon className={device.isOnline ? "text-emerald-600" : "text-slate-400"} size={28} />
@@ -96,22 +136,55 @@ export function BusDetailsPanel({ device, onClose, onViewRoute }: BusDetailsPane
 
         {/* Scrollable body */}
         <ScrollArea className="flex-1 min-h-0">
-          <div className="px-6 pb-8 space-y-6">
-            {/* Stats */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className={`p-4 rounded-2xl border ${device.isOnline ? "bg-emerald-50 border-emerald-100" : "bg-slate-50 border-slate-100"}`}>
-                <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Status</p>
-                <p className={`text-lg font-black ${device.isOnline ? "text-emerald-600" : "text-slate-500"}`}>
-                  {device.isOnline ? "Live" : "Offline"}
-                </p>
+          <div className="px-6 pb-20 space-y-6">
+            {/* Status chip */}
+            <div className={`p-4 rounded-2xl border ${device.isOnline ? "bg-emerald-50 border-emerald-100" : "bg-slate-50 border-slate-100"}`}>
+              <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Status</p>
+              <p className={`text-lg font-black ${device.isOnline ? "text-emerald-600" : "text-slate-500"}`}>
+                {device.isOnline ? "Live" : "Offline"}
+              </p>
+            </div>
+
+            {/* Occupancy — always visible; shows — when data hasn't loaded yet */}
+            <div className="bg-slate-50 rounded-2xl border border-slate-100 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <Users size={14} className="text-slate-400" />
+                <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Occupancy</p>
               </div>
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                <p className="text-[10px] uppercase font-bold text-slate-400 tracking-wider mb-1">Total Seats</p>
-                <p className="text-lg font-black text-slate-900">
-                  {device.seatingCapacity ?? "—"}
-                  <span className="text-sm font-medium text-slate-400 ml-1">Seats</span>
-                </p>
+              <div className="grid grid-cols-4 gap-2">
+                <div className="text-center">
+                  <p className="text-xl font-black text-primary">
+                    {passengers != null ? passengers.activeJourneys : "—"}
+                  </p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">On Board</p>
+                </div>
+                <div className="text-center border-x border-slate-200">
+                  <p className="text-xl font-black text-amber-600">
+                    {passengers != null ? passengers.bookedSeats : "—"}
+                  </p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Booked</p>
+                </div>
+                <div className="text-center border-r border-slate-200">
+                  <p className="text-xl font-black text-emerald-600">
+                    {passengers?.available != null ? passengers.available : "—"}
+                  </p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Free</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-xl font-black text-slate-700">
+                    {capacity ?? "—"}
+                  </p>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Total</p>
+                </div>
               </div>
+              {capacity != null && passengers != null && (
+                <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-primary transition-all"
+                    style={{ width: `${Math.min(100, (passengers.activeJourneys / capacity) * 100)}%` }}
+                  />
+                </div>
+              )}
             </div>
 
             {/* Info */}

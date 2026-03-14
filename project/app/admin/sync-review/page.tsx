@@ -165,6 +165,14 @@ export default function SyncReviewPage() {
   const [busyItem, setBusyItem] = useState<string | null>(null);
   const [batchBusy, setBatchBusy] = useState(false);
 
+  const [page, setPage] = useState(1);
+  const PER_PAGE = 20;
+  const totalPages = Math.max(1, Math.ceil(items.length / PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+  const paginatedItems = items.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
+
+  useEffect(() => { setPage(1); }, [filterStatus, filterEntityType, filterRouteId]);
+
   const fetchItems = useCallback(async () => {
     setLoading(true);
     try {
@@ -374,15 +382,40 @@ export default function SyncReviewPage() {
           </div>
         ) : (
           <div>
-            {items.map((item) => (
-              <ReviewRow
-                key={item._id}
-                item={item}
-                onApprove={handleApprove}
-                onIgnore={handleIgnore}
-                busy={busyItem}
-              />
-            ))}
+            <div>
+              {paginatedItems.map((item) => (
+                <ReviewRow
+                  key={item._id}
+                  item={item}
+                  onApprove={handleApprove}
+                  onIgnore={handleIgnore}
+                  busy={busyItem}
+                />
+              ))}
+            </div>
+
+            {/* Pagination */}
+            {totalPages > 1 && (
+              <div className="p-4 bg-slate-50 border-t border-slate-100 flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                  Page {safePage} of {totalPages} · {items.length} total
+                </span>
+                <div className="flex gap-2">
+                  <Button 
+                    variant="outline" size="sm" className="h-8 rounded-xl px-3" 
+                    disabled={safePage <= 1} onClick={() => setPage(p => p - 1)}
+                  >
+                    Previous
+                  </Button>
+                  <Button 
+                    variant="outline" size="sm" className="h-8 rounded-xl px-3" 
+                    disabled={safePage >= totalPages} onClick={() => setPage(p => p + 1)}
+                  >
+                    Next
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

@@ -33,6 +33,7 @@ interface Journey {
   alightingStopName: string | null;
   stopsTravelled: number | null;
   fareCharged: number | null;
+  fareSectionName: string | null;
   status: "active" | "completed" | "cancelled";
   startedAt: string;
   endedAt: string | null;
@@ -256,9 +257,14 @@ function JourneysTab() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-center">
-                      <span className="font-black text-sm text-primary">
+                      <p className="font-black text-sm text-primary">
                         {j.fareCharged != null ? `${j.fareCharged} pts` : "—"}
-                      </span>
+                      </p>
+                      {j.fareSectionName && (
+                        <p className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter leading-none mt-0.5">
+                          {j.fareSectionName}
+                        </p>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <Badge

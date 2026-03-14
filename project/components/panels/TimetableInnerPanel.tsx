@@ -9,6 +9,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Calendar } from "@/components/ui/calendar";
 import { RouteTimetableContent } from "@/components/panels/RouteTimetableContent";
 import { format, isWeekend } from "date-fns";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
 
 interface TimetableInnerPanelProps {
   routeId: string | null;
@@ -17,6 +19,7 @@ interface TimetableInnerPanelProps {
 }
 
 export function TimetableInnerPanel({ routeId, routeNumber, onClose }: TimetableInnerPanelProps) {
+  const isMobile = useIsMobile();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [calOpen, setCalOpen] = useState(false);
 
@@ -26,14 +29,24 @@ export function TimetableInnerPanel({ routeId, routeNumber, onClose }: Timetable
     <AnimatePresence>
       {routeId && (
         <motion.div
-          initial={{ x: "100%" }}
-          animate={{ x: 0 }}
-          exit={{ x: "100%" }}
+          initial={isMobile ? { y: "100%", x: 0 } : { x: "100%", y: 0 }}
+          animate={{ x: 0, y: 0 }}
+          exit={isMobile ? { y: "100%", x: 0 } : { x: "100%", y: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 220 }}
-          className="absolute inset-0 z-20 bg-white flex flex-col overflow-hidden"
+          className={cn(
+            "absolute inset-0 z-20 bg-white flex flex-col overflow-hidden",
+            isMobile && "rounded-t-[2.5rem]"
+          )}
         >
+          {/* Mobile handle indicator */}
+          {isMobile && (
+            <div className="w-full flex justify-center pt-3 pb-1 shrink-0 bg-slate-50/50">
+              <div className="w-12 h-1.5 bg-slate-200 rounded-full" />
+            </div>
+          )}
+
           {/* Header */}
-          <div className="p-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50">
+          <div className={cn("p-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-slate-50/50", isMobile ? "pt-2" : "")}>
             <div className="flex items-center gap-3">
               <div className="bg-primary/10 p-2 rounded-xl">
                 <Clock className="text-primary" size={20} />

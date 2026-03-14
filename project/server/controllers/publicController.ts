@@ -13,6 +13,8 @@ const Bus = require('../models/Bus');
 const RoutePermit = require('../models/RoutePermit');
 
 const BusStandContact = require('../models/BusStandContact');
+const Journey = require('../models/Journey');
+const Booking = require('../models/Booking');
 
 const router = express.Router();
 
@@ -550,6 +552,97 @@ router.get('/routes-by-stops', async (req, res) => {
       success: true,
       data: routes.map(r => asRouteDTO(r, stopMap.get(String(r.startingBusStop)), stopMap.get(String(r.endingBusStop)))),
     });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/* GET /api/public/bus-passengers/:deviceId — active journey + booking count for a bus */
+router.get('/bus-passengers/:deviceId', async (req, res) => {
+  try {
+    const deviceId = String(req.params.deviceId);
+    const activeJourneys = await Journey.countDocuments({ deviceId, status: 'active' });
+
+    // Get seating capacity from the live vehicle → bus, and resolve routeId for bookings
+    const lv = await LiveVehicle.findOne({ _id: deviceId }).lean();
+    let seatingCapacity = null;
+    let bookedSeats = 0;
+
+    if (lv?.busId) {
+      const bus = await Bus.findById(String(lv.busId)).lean();
+      seatingCapacity = bus?.seatingCapacity ?? null;
+    }
+
+    // Count today's confirmed bookings for this route
+    if (lv?.routeId) {
+      const today = new Date();
+      const yyyy = today.getFullYear();
+      const mm   = String(today.getMonth() + 1).padStart(2, '0');
+      const dd   = String(today.getDate()).padStart(2, '0');
+      const todayStr = `${yyyy}-${mm}-${dd}`;
+      bookedSeats = await Booking.countDocuments({
+        routeId:    String(lv.routeId),
+        travelDate: todayStr,
+        status:     { $in: ['confirmed', 'draft'] },
+      });
+    }
+
+    const available = seatingCapacity != null ? Math.max(0, seatingCapacity - activeJourneys) : null;
+
+    return res.json({ success: true, data: { activeJourneys, bookedSeats, seatingCapacity, available } });
+  } catch (err) {
+    return res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+/* GET /api/public/slot-availability?routeId=...&travelDate=...
+   Returns booking counts per slot so the booking page can disable full slots. */
+router.get('/slot-availability', async (req, res) => {
+  try {
+    const { routeId, travelDate } = req.query;
+    if (!routeId || !travelDate) {
+      return res.status(400).json({ success: false, error: 'routeId and travelDate required' });
+    }
+
+    const date = new Date(String(travelDate));
+    if (isNaN(date.getTime())) {
+      return res.status(400).json({ success: false, error: 'Invalid travelDate' });
+    }
+
+    // Date range covering the entire travel day
+    const dayStart = new Date(date); dayStart.setHours(0, 0, 0, 0);
+    const dayEnd   = new Date(date); dayEnd.setHours(23, 59, 59, 999);
+
+    // Get all slots for this route
+    const slots = await RunningSlot.find({ routeId: String(routeId) }).lean();
+
+    // Count active bookings (draft + confirmed) per slot for this date
+    const bookings = await Booking.aggregate([
+      {
+        $match: {
+          routeId: String(routeId),
+          travelDate: { $gte: dayStart, $lte: dayEnd },
+          status: { $in: ['draft', 'confirmed'] },
+        },
+      },
+      { $group: { _id: '$slotId', count: { $sum: 1 } } },
+    ]);
+
+    const countMap = new Map(bookings.map((b) => [String(b._id), b.count]));
+
+    const data = slots.map((slot) => {
+      const slotId = String(slot._id);
+      const bookedCount = countMap.get(slotId) || 0;
+      const maxBookableSeats = slot.maxBookableSeats ?? 10;
+      return {
+        slotId,
+        bookedCount,
+        maxBookableSeats,
+        isFull: bookedCount >= maxBookableSeats,
+      };
+    });
+
+    return res.json({ success: true, data });
   } catch (err) {
     return res.status(500).json({ success: false, error: err.message });
   }

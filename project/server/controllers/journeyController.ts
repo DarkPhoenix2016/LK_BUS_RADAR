@@ -1,124 +1,24 @@
 // @ts-nocheck
 const express = require('express');
 const Journey        = require('../models/Journey');
-const FareSection    = require('../models/FareSection');
 const LiveVehicle    = require('../models/LiveVehicle');
-const RouteStop      = require('../models/RouteStop');
-const BusStop        = require('../models/BusStop');
 const Device         = require('../models/Device');
 const Bus            = require('../models/Bus');
 const Route          = require('../models/Route');
 const User           = require('../models/User');
+const BusStop        = require('../models/BusStop');
 const PointTransaction = require('../models/PointTransaction');
 const { requireAuth } = require('../middleware/authMiddleware');
+const logger = require('../utils/logger');
+const {
+  haversineKm,
+  nearestStopInList,
+  detectBusDirection,
+  loadRouteStopsWithCoords,
+  lookupFare
+} = require('../utils/journeyUtils');
 
 const router = express.Router();
-
-/* ─────────────────────── geo helpers ─────────────────────── */
-
-function haversineKm(lat1, lon1, lat2, lon2) {
-  const R = 6371;
-  const dLat = (lat2 - lat1) * Math.PI / 180;
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(lat1 * Math.PI / 180) *
-    Math.cos(lat2 * Math.PI / 180) *
-    Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-function bearingDeg(lat1, lon1, lat2, lon2) {
-  const dLon = (lon2 - lon1) * Math.PI / 180;
-  const lat1r = lat1 * Math.PI / 180;
-  const lat2r = lat2 * Math.PI / 180;
-  const y = Math.sin(dLon) * Math.cos(lat2r);
-  const x = Math.cos(lat1r) * Math.sin(lat2r) - Math.sin(lat1r) * Math.cos(lat2r) * Math.cos(dLon);
-  return ((Math.atan2(y, x) * 180 / Math.PI) + 360) % 360;
-}
-
-function angleDiffAbs(a, b) {
-  return Math.abs(((a - b + 180) % 360) - 180);
-}
-
-function nearestStopInList(stops, lat, lon) {
-  let best = null;
-  let bestDist = Infinity;
-  for (const s of stops) {
-    const sLat = parseFloat(s.latitude ?? s.lat ?? 0);
-    const sLon = parseFloat(s.longitude ?? s.lon ?? 0);
-    if (!sLat && !sLon) continue;
-    const d = haversineKm(lat, lon, sLat, sLon);
-    if (d < bestDist) { bestDist = d; best = s; }
-  }
-  return best;
-}
-
-/**
- * Detect bus direction using heading (if available) or nearest stop distance.
- */
-function detectBusDirection(upStops, downStops, busLat, busLon, busHeading) {
-  const nearUp   = nearestStopInList(upStops,   busLat, busLon);
-  const nearDown = nearestStopInList(downStops,  busLat, busLon);
-
-  if (!nearUp && !nearDown) return null;
-  if (!nearUp)   return { direction: 'DOWN', orderedStops: downStops, nearStop: nearDown };
-  if (!nearDown) return { direction: 'UP',   orderedStops: upStops,   nearStop: nearUp   };
-
-  if (busHeading != null && busHeading !== 0) {
-    const upIdx   = upStops.findIndex(s => s.stopId === nearUp.stopId);
-    const downIdx = downStops.findIndex(s => s.stopId === nearDown.stopId);
-    const nextUp   = upStops[upIdx + 1];
-    const nextDown = downStops[downIdx + 1];
-
-    if (nextUp && nextDown) {
-      const bUp   = bearingDeg(busLat, busLon, parseFloat(nextUp.latitude),   parseFloat(nextUp.longitude));
-      const bDown = bearingDeg(busLat, busLon, parseFloat(nextDown.latitude),  parseFloat(nextDown.longitude));
-      if (angleDiffAbs(busHeading, bUp) < angleDiffAbs(busHeading, bDown)) {
-        return { direction: 'UP',   orderedStops: upStops,   nearStop: nearUp   };
-      } else {
-        return { direction: 'DOWN', orderedStops: downStops, nearStop: nearDown };
-      }
-    }
-  }
-
-  const distUp   = haversineKm(busLat, busLon, parseFloat(nearUp.latitude),   parseFloat(nearUp.longitude));
-  const distDown = haversineKm(busLat, busLon, parseFloat(nearDown.latitude),  parseFloat(nearDown.longitude));
-  return distUp <= distDown
-    ? { direction: 'UP',   orderedStops: upStops,   nearStop: nearUp   }
-    : { direction: 'DOWN', orderedStops: downStops, nearStop: nearDown };
-}
-
-/* ─────────────────────── shared data loader ─────────────────── */
-
-async function loadRouteStopsWithCoords(routeId, direction) {
-  const routeStops = await RouteStop.find({ routeId, direction })
-    .sort({ displayOrder: 1 })
-    .lean();
-  const stopIds = routeStops.map(rs => rs.stopId);
-  const busStops = await BusStop.find({ _id: { $in: stopIds } }).lean();
-  const stopMap = Object.fromEntries(busStops.map(s => [String(s._id), s]));
-  return routeStops
-    .map(rs => ({ ...stopMap[String(rs.stopId)], stopId: String(rs.stopId), displayOrder: rs.displayOrder }))
-    .filter(s => s.latitude);
-}
-
-/**
- * Fare lookup.
- * Falls back to a default per-stop rate when no FareSection rules are configured.
- * Default: 10 pts per stop, minimum 20 pts.
- */
-async function lookupFare(stopsTravelled) {
-  const sections = await FareSection.find().sort({ stops: 1 }).lean();
-  if (sections.length === 0) {
-    // No fare rules configured — use a sensible default
-    return Math.max(20, stopsTravelled * 10);
-  }
-  for (const fs of sections) {
-    if (stopsTravelled <= fs.stops) return fs.price;
-  }
-  return sections[sections.length - 1].price;
-}
 
 /* ─────────────────────── GET /api/journey/active ─────────────── */
 
@@ -268,14 +168,16 @@ router.post('/board', requireAuth, async (req, res) => {
       routeEndName   = stopNameMap[String(route.endingBusStop)]   || null;
     }
 
-    // Use user GPS (if valid) to find the nearest boarding stop; fall back to bus GPS
+    // Use user GPS if available AND within 500m of bus (user is on the bus) — else use bus GPS
     const hasUserGps = userLat != null && userLon != null &&
                        Number.isFinite(Number(userLat)) && Number.isFinite(Number(userLon));
-    const boardingRefLat = hasUserGps ? Number(userLat) : live.lat;
-    const boardingRefLon = hasUserGps ? Number(userLon) : live.lon;
+    const userNearBus = hasUserGps &&
+      haversineKm(Number(userLat), Number(userLon), live.lat, live.lon) <= 0.5;
+    const boardingRefLat = userNearBus ? Number(userLat) : live.lat;
+    const boardingRefLon = userNearBus ? Number(userLon) : live.lon;
 
     const boardingStop = nearestStopInList(orderedStops, boardingRefLat, boardingRefLon);
-    if (!boardingStop) return res.status(500).json({ error: 'Could not find a boarding stop near your location.' });
+    if (!boardingStop) return res.status(500).json({ error: 'Could not find a boarding stop near the bus.' });
 
     const boardingIndex = orderedStops.findIndex(s => s.stopId === boardingStop.stopId);
 
@@ -287,8 +189,8 @@ router.post('/board', requireAuth, async (req, res) => {
       boardingStopId:    boardingStop.stopId,
       boardingStopName:  boardingStop.name || '',
       boardingStopIndex: boardingIndex,
-      boardingLat:       hasUserGps ? Number(userLat) : null,
-      boardingLon:       hasUserGps ? Number(userLon) : null,
+      boardingLat:       hasUserGps ? Number(userLat) : live.lat,
+      boardingLon:       hasUserGps ? Number(userLon) : live.lon,
       status: 'active',
       // denormalized fields
       busNumber:      busDoc?.busNumber || null,
@@ -325,42 +227,36 @@ router.post('/alight', requireAuth, async (req, res) => {
       return res.status(404).json({ error: 'No active journey found for this bus. Make sure you scanned the correct bus QR.' });
     }
 
-    // Use user GPS, then bus GPS as fallback
+    // Use bus GPS to find the nearest alighting stop (bus is at the stop when passenger scans)
     const live = await LiveVehicle.findOne({ _id: deviceId }).lean();
-    const refLat = userLat ?? live?.lat;
-    const refLon = userLon ?? live?.lon;
-    if (!refLat || !refLon) return res.status(400).json({ error: 'Cannot determine your location. Please allow GPS access.' });
+    if (!live?.lat || !live?.lon) return res.status(400).json({ error: 'Bus GPS unavailable. Cannot determine alighting stop.' });
 
     // Route stops for the journey direction
     const orderedStops = await loadRouteStopsWithCoords(journey.routeId, journey.direction);
 
-    const nearStop = nearestStopInList(orderedStops, Number(refLat), Number(refLon));
+    // Use user GPS if within 500m of bus — else use bus GPS
+    const hasUserGps = userLat != null && userLon != null &&
+                       Number.isFinite(Number(userLat)) && Number.isFinite(Number(userLon));
+    const userNearBus = hasUserGps &&
+      haversineKm(Number(userLat), Number(userLon), live.lat, live.lon) <= 0.5;
+    const alightRefLat = userNearBus ? Number(userLat) : live.lat;
+    const alightRefLon = userNearBus ? Number(userLon) : live.lon;
+
+    const nearStop = nearestStopInList(orderedStops, alightRefLat, alightRefLon);
     if (!nearStop) return res.status(500).json({ error: 'Could not find nearest stop.' });
 
     const alightingIndex = orderedStops.findIndex(s => s.stopId === nearStop.stopId);
     const stopsTravelled = Math.max(1, Math.abs(alightingIndex - journey.boardingStopIndex));
-    const fareCharged    = await lookupFare(stopsTravelled);
+    const fareInfo       = await lookupFare(stopsTravelled);
+    const fareCharged    = fareInfo.price;
 
-    // Deduct points atomically
-    const user = await User.findById(userId).lean();
-    if (!user) return res.status(404).json({ error: 'User not found.' });
-
-    if ((user.pointBalance ?? 0) < fareCharged) {
-      return res.status(402).json({
-        error: `Insufficient points. Fare is ${fareCharged} pts, you have ${user.pointBalance ?? 0} pts. Please top up your wallet.`,
-        fareRequired: fareCharged,
-        currentBalance: user.pointBalance ?? 0,
-      });
-    }
-
-    const updated = await User.findOneAndUpdate(
-      { _id: userId, pointBalance: { $gte: fareCharged } },
+    // Deduct fare unconditionally — allow negative balance (acts as debt cleared on next top-up)
+    const updated = await User.findByIdAndUpdate(
+      userId,
       { $inc: { pointBalance: -fareCharged } },
       { new: true }
     );
-    if (!updated) {
-      return res.status(402).json({ error: 'Insufficient points. Please top up your wallet.' });
-    }
+    if (!updated) return res.status(404).json({ error: 'User not found.' });
 
     await PointTransaction.create({
       userId,
@@ -374,10 +270,12 @@ router.post('/alight', requireAuth, async (req, res) => {
     journey.alightingStopId    = nearStop.stopId;
     journey.alightingStopName  = nearStop.name || '';
     journey.alightingStopIndex = alightingIndex;
-    journey.alightingLat       = Number(refLat);
-    journey.alightingLon       = Number(refLon);
+    journey.alightingLat       = alightRefLat;
+    journey.alightingLon       = alightRefLon;
     journey.stopsTravelled     = stopsTravelled;
     journey.fareCharged        = fareCharged;
+    journey.fareSectionId      = fareInfo.sectionId;
+    journey.fareSectionName    = fareInfo.sectionName;
     journey.status             = 'completed';
     journey.endedAt            = new Date();
     await journey.save();
@@ -386,9 +284,38 @@ router.post('/alight', requireAuth, async (req, res) => {
       journey,
       fareCharged,
       stopsTravelled,
+      fareSectionName: fareInfo.sectionName,
       newBalance: updated.pointBalance,
       from: journey.boardingStopName,
       to:   nearStop.name,
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+/* ─────────────────────── GET /api/journey/:id ─────────────────── */
+
+router.get('/:id', requireAuth, async (req, res) => {
+  try {
+    const journey = await Journey.findOne({ _id: req.params.id, userId: req.user.uid }).lean();
+    if (!journey) return res.status(404).json({ error: 'Journey not found.' });
+    const stops = await loadRouteStopsWithCoords(journey.routeId, journey.direction);
+    const mappedStops = stops.map(s => ({
+      _id: s.stopId,
+      name: s.name,
+      latitude: s.latitude,
+      longitude: s.longitude,
+      displayOrder: s.displayOrder,
+    }));
+    res.json({
+      journey,
+      stops: mappedStops,
+      live: null,
+      routeNumber:    journey.routeNumber    || null,
+      routeStartName: journey.routeStartName || null,
+      routeEndName:   journey.routeEndName   || null,
+      busNumber:      journey.busNumber      || null,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
